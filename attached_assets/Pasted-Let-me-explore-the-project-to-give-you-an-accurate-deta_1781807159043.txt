@@ -1,0 +1,75 @@
+Let me explore the project to give you an accurate, detailed description.
+
+Listed directory pg%20automate
+Listed directory src
+Listed directory components
+Viewed types.ts:1-280
+Viewed App.tsx:1-120
+Viewed App.tsx:120-350
+
+Now I have enough to write a thorough description. Let me create a detailed artifact.
+
+Edited renttrack_description.md
+
+Here's the full detailed description of what has been built:
+
+---
+
+# 🏠 RentTrack — What It Is
+
+**RentTrack** is a **browser-based Accommodation Operating System** for Indian property owners. It replaces notebooks, WhatsApp groups, and spreadsheets with a single, fast, modern web app.
+
+---
+
+## 🎯 Target Users
+PG owners · Hostel operators · Co-living spaces · Dormitory managers · Lodges · Small hotels
+
+---
+
+## 🗂️ Core Data Hierarchy
+```
+Business → Property → Building → Floor → Room → Bed
+```
+Every guest, payment, and complaint is pinned to a specific bed in this tree.
+
+---
+
+## 📱 13 Screens / Modules
+
+| Module | What It Does |
+|---|---|
+| **Login / Signup** | Mobile-first signup with pill selectors, property stepper, WhatsApp success screen |
+| **Onboarding Wizard** | 3-step setup: Business details → Google Maps property finder → Branding |
+| **Dashboard** | Live occupancy rate, color-coded bed grid, today's summary, quick actions |
+| **Property Explorer** | Build/edit the Buildings → Floors → Rooms → Beds tree with deletion guards |
+| **Guest Manager** | Full guest lifecycle: check-in, profile, documents, Aadhaar, emergency contacts, check-out |
+| **Document Hub** | Archive Aadhaar, rental agreements, IDs — with AI OCR simulator |
+| **Payment Hub** | Rent ledger, UPI tracking, overdue detection, discount approval codes |
+| **Complaint Manager** | 5-stage pipeline: Pending → Assigned → In Progress → Resolved → Closed |
+| **WhatsApp Board** | Message templates for rent reminders, check-in confirmations |
+| **AI Receptionist** | Natural language front-desk agent powered by Gemini API |
+| **AI Assistant** | Floating chat bubble for general property queries |
+| **Guest Portal** | Self-service form for guests to fill their own profile |
+| **Settings** | Business config, booking policy, staff management, activity audit logs |
+
+---
+
+## 🔐 Role-Based Access
+- **Owner** → Full access including billing, system reset, staff management
+- **Manager** → All operational tabs, no billing/settings
+- **Operator** → Operations only (guests, payments, complaints, documents)
+
+---
+
+## 🏗️ Multi-Property Support
+Header dropdown switches active property; all data (guests/payments/complaints) is **automatically scoped** to the selected property.
+
+---
+
+## ⚙️ Tech Stack
+**React 18 + Vite + TypeScript + Tailwind CSS + Lucide Icons + Google Maps API + Gemini AI**  
+Zero backend — runs entirely in the browser with `localStorage`. Deployed on **Vercel**.
+
+---
+
+The full detailed breakdown is in the [renttrack_description.md](file:///C:/Users/yk098/.gemini/antigravity/brain/c24d2493-935a-4046-b610-22e9ac0e1dfc/renttrack_description.md) artifact. What would you like to build or improve next?

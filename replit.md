@@ -1,6 +1,6 @@
-# [Project name]
+# NestPro — PG & Hostel OS
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack operating system for Indian PG/hostel owners to manage properties, guests, payments, and complaints.
 
 ## Run & Operate
 
@@ -22,15 +22,30 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- API contract: `lib/api-spec/openapi.yaml`
+- DB schema: `lib/db/src/schema/` (one file per entity)
+- API routes: `artifacts/api-server/src/routes/`
+- Frontend: `artifacts/nestpro/src/`
+- Generated hooks: `lib/api-client-react/src/generated/api.ts`
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Data hierarchy: Property → Building → Floor → Room → Bed (fully cascades on delete)
+- All API routes are explicitly prefixed (e.g. `/properties`, `/buildings/:id`) — NOT mounted via sub-router to avoid Express path-matching issues
+- Numeric DB columns (amount, rent) stored as PostgreSQL `numeric` and converted to `Number()` in route responses
+- Bed status is updated automatically on guest check-in (`occupied`) and check-out (`available`)
+- Activity logging is best-effort (swallows errors) so it never blocks primary operations
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Dashboard**: Live occupancy, KPI cards, 6-month revenue chart, recent activity feed
+- **Properties**: Multi-property management with per-property occupancy stats
+- **Property Explorer**: Building → Floor → Room → Bed tree with color-coded bed grid
+- **Guests**: Full guest lifecycle — check-in, profile, documents, check-out
+- **Payments**: Rent ledger with UPI tracking, overdue detection, partial payments
+- **Complaints**: 5-stage Kanban pipeline (Pending → Assigned → In Progress → Resolved → Closed)
+- **Staff**: Role-based staff management (Owner / Manager / Operator)
+- **Activity**: Full audit log across all properties
 
 ## User preferences
 
@@ -38,7 +53,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Always run codegen after OpenAPI spec changes: `pnpm --filter @workspace/api-spec run codegen`
+- API routes must use full path prefixes (e.g. `/properties/:id`) — using bare `/:id` causes Express to mis-match other routes
+- `numeric` Drizzle columns come back as strings from pg-driver — always wrap with `Number()` in route responses
+- Bed status must be kept in sync with guest status (check-in = occupied, check-out = available)
 
 ## Pointers
 

@@ -11,6 +11,7 @@ import complaintsRouter from "./complaints";
 import staffRouter from "./staff";
 import dashboardRouter from "./dashboard";
 import activityRouter from "./activity";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(complaintsRouter);
 router.use(staffRouter);
 router.use(dashboardRouter);
 router.use(activityRouter);
+router.use(aiRouter);
 
 export default router;

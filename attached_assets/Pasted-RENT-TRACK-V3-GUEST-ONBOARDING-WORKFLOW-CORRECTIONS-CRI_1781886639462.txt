@@ -1,0 +1,379 @@
+RENT TRACK V3 - GUEST ONBOARDING & WORKFLOW CORRECTIONS
+
+CRITICAL PRODUCT FIXES
+
+The current Guest Check-In Portal is still partially form-based and not fully operational.
+
+The following changes are required.
+
+---
+
+1. REMOVE PHONE VERIFICATION FOR NOW
+
+---
+
+Do not block onboarding with OTP.
+
+Do not require:
+
+* SMS Verification
+* Phone Verification
+* OTP Verification
+
+Reason:
+
+The business does not yet have a production SMS provider.
+
+Guest onboarding must continue without interruption.
+
+Collect mobile number only.
+
+Validation:
+
+* India only
+* Exactly 10 digits
+* Numbers only
+
+Examples:
+
+9876543210
+
+Valid.
+
+98765
+
+Invalid.
+
+---
+
+2. GUEST STAY TYPE
+
+---
+
+Current system assumes long-term stay.
+
+This is incorrect.
+
+Guests may stay:
+
+* One Night
+* Multiple Nights
+* Weekly
+* Monthly
+* Long-Term
+
+Replace Expected Stay with:
+
+Stay Type
+
+Options:
+
+Night Stay
+Weekly Stay
+Monthly Stay
+Long-Term Stay
+
+Then collect:
+
+Check-In Date
+
+Expected Check-Out Date
+
+or
+
+Open Ended Stay
+
+---
+
+3. ROOM ASSIGNMENT
+
+---
+
+Guest must specify room details.
+
+Add:
+
+Property
+
+Building
+
+Floor
+
+Room Number
+
+Bed Number
+
+If room already assigned by operator:
+
+Auto-fill values.
+
+If not assigned:
+
+Guest selects available room.
+
+System checks availability.
+
+---
+
+4. DOCUMENT UPLOADS MUST WORK
+
+---
+
+Current uploads cannot be decorative.
+
+Uploaded files must be stored.
+
+Support:
+
+Aadhaar
+
+Passport
+
+Driving License
+
+Voter ID
+
+Employee ID
+
+Student ID
+
+Payment Screenshot
+
+Booking Screenshot
+
+Rental Agreement
+
+Images
+
+PDF
+
+JPEG
+
+PNG
+
+After submission:
+
+Files must appear inside:
+
+Document Hub
+
+and
+
+Guest Profile
+
+Immediately.
+
+---
+
+5. PAYMENT PROOF
+
+---
+
+Guest can upload:
+
+UPI Screenshot
+
+Bank Transfer Screenshot
+
+Booking.com Invoice
+
+Agoda Invoice
+
+Airbnb Invoice
+
+Receipt Image
+
+PDF Receipt
+
+Store under:
+
+Guest Payment Records
+
+Status:
+
+Pending Verification
+
+Verified
+
+Rejected
+
+---
+
+6. BOOKING SOURCE TRACKING
+
+---
+
+Mandatory field.
+
+How did you book?
+
+Options:
+
+Direct Walk-In
+
+WhatsApp
+
+Google Search
+
+Booking.com
+
+Agoda
+
+Airbnb
+
+Hostelworld
+
+Goibibo
+
+Makemytrip
+
+Travel Agent
+
+Other
+
+Store permanently.
+
+Useful for future analytics.
+
+---
+
+7. SUBMISSION MUST CREATE REAL RECORDS
+
+---
+
+Current implementation feels like a demo.
+
+After guest clicks Submit:
+
+System must:
+
+Create Guest Profile
+
+Create Registration Record
+
+Store Documents
+
+Store Payment Proof
+
+Create Audit Log
+
+Create Notification
+
+Add Entry to Dashboard
+
+Increment Pending Approval Count
+
+Nothing should disappear.
+
+Nothing should reset.
+
+---
+
+8. DASHBOARD NOTIFICATIONS
+
+---
+
+After guest submission:
+
+Owner / Manager should immediately see:
+
+🔔 New Guest Registration
+
+Name
+
+Property
+
+Room
+
+Submission Time
+
+Documents Uploaded
+
+Payment Uploaded
+
+Actions:
+
+Approve
+
+Reject
+
+Request More Information
+
+---
+
+9. BACK BUTTON & FORM PERSISTENCE
+
+---
+
+Current onboarding experience loses data.
+
+This is unacceptable.
+
+Requirements:
+
+Back Button
+
+Next Button
+
+Auto Save
+
+Draft Save
+
+Page Refresh Recovery
+
+If guest refreshes:
+
+Resume where they left off.
+
+Never lose entered data.
+
+---
+
+10. WORKING SYSTEM RULE
+
+---
+
+No screen should exist only for display.
+
+Every action must produce a result.
+
+Examples:
+
+Upload Document
+→ Document Stored
+
+Submit Registration
+→ Registration Created
+
+Upload Payment
+→ Payment Record Created
+
+Assign Room
+→ Room Occupancy Updated
+
+Invite Team Member
+→ Team Member Created
+
+Every button must trigger real business logic.
+
+No demo-only screens.
+
+No placeholder workflows.
+
+SUCCESS CRITERIA
+
+A guest should be able to:
+
+Open Link
+
+Fill Details
+
+Upload Documents
+
+Upload Payment Proof
+
+Select Room
+
+Submit Registration
+
+And the owner should instantly see that registration inside Rent Track without manually re-entering any information.

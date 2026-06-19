@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import {
   Building2, Users, CreditCard, LayoutDashboard, AlertCircle,
-  UserCircle, Activity, Settings, Sparkles, LogOut, ChevronDown,
+  UserCircle, Activity, Settings, Sparkles, LogOut,
 } from "lucide-react";
 import { usePropertyContext } from "./property-provider";
 import { useListProperties } from "@workspace/api-client-react";
@@ -10,11 +10,29 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Toaster } from "@/components/ui/toaster";
+import { useQuery } from "@tanstack/react-query";
+
+const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+async function fetchSubmissions() {
+  const res = await fetch(`${BASE}/api/checkin/submissions`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+function usePendingCount() {
+  const { data } = useQuery({
+    queryKey: ["checkin-submissions-count"],
+    queryFn: fetchSubmissions,
+    refetchInterval: 30_000,
+  });
+  if (!Array.isArray(data)) return 0;
+  return data.filter((s: any) => s.status === "submitted").length;
+}
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Properties", href: "/properties", icon: Building2 },
-  { name: "Guests", href: "/guests", icon: Users },
+  { name: "Guests", href: "/guests", icon: Users, badge: "pending" },
   { name: "Payments", href: "/payments", icon: CreditCard },
   { name: "Complaints", href: "/complaints", icon: AlertCircle },
   { name: "Team", href: "/staff", icon: UserCircle },
@@ -52,6 +70,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { data: properties = [] } = useListProperties();
   const user = getUser();
   const biz = getBusiness();
+  const pendingCount = usePendingCount();
 
   React.useEffect(() => {
     if (!activePropertyId && properties.length > 0) {
@@ -106,6 +125,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {navigation.map((item) => {
             const isActive = location === item.href ||
               (item.href !== "/" && location.startsWith(item.href));
+            const showBadge = item.badge === "pending" && pendingCount > 0;
             return (
               <Link
                 key={item.name}
@@ -118,7 +138,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 <item.icon className={`mr-2.5 shrink-0 h-4 w-4 ${isActive ? "text-blue-600" : "text-gray-400"}`} />
                 {item.name}
-                {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />}
+                {showBadge && (
+                  <span className="ml-auto text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                    {pendingCount}
+                  </span>
+                )}
+                {!showBadge && isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />}
               </Link>
             );
           })}
@@ -183,6 +208,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </h2>
           </div>
           <div className="flex items-center gap-3">
+            {pendingCount > 0 && (
+              <Link href="/guests">
+                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-amber-100 transition cursor-pointer">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  {pendingCount} pending registration{pendingCount !== 1 ? "s" : ""}
+                </div>
+              </Link>
+            )}
             {properties.length > 0 && activePropertyId && (
               <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
                 {properties.find((p) => p.id === activePropertyId)?.name ?? ""}

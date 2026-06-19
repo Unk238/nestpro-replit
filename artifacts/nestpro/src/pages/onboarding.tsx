@@ -157,6 +157,17 @@ export default function Onboarding({ user, onComplete }: OnboardingProps) {
     updateProp(pi, { buildings: newBuildings });
   };
 
+  const removeFloor = (pi: number, bi: number, fi: number) => {
+    const newBuildings = properties[pi].buildings.map((b, bi2) =>
+      bi2 === bi ? { ...b, floors: b.floors.filter((_, i) => i !== fi) } : b
+    );
+    updateProp(pi, { buildings: newBuildings });
+  };
+
+  const removeBuilding = (pi: number, bi: number) => {
+    updateProp(pi, { buildings: properties[pi].buildings.filter((_, i) => i !== bi) });
+  };
+
   const updateRoom = (pi: number, bi: number, fi: number, ri: number, patch: Partial<Room>) => {
     const newBuildings = properties[pi].buildings.map((b, bi2) =>
       bi2 === bi
@@ -534,7 +545,7 @@ export default function Onboarding({ user, onComplete }: OnboardingProps) {
                   {properties[activePropIdx].buildings.map((bldg, bi) => (
                     <div key={bldg.id} className="bg-white rounded-2xl border shadow-sm overflow-hidden">
                       <div className="bg-gray-50 border-b px-5 py-3 flex items-center gap-3">
-                        <Building2 className="h-4 w-4 text-gray-400" />
+                        <Building2 className="h-4 w-4 text-gray-400 shrink-0" />
                         <input
                           value={bldg.name}
                           onChange={(e) => {
@@ -547,9 +558,16 @@ export default function Onboarding({ user, onComplete }: OnboardingProps) {
                         />
                         <button
                           onClick={() => addFloor(activePropIdx, bi)}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                          className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 shrink-0"
                         >
                           <Plus className="h-3 w-3" /> Add Floor
+                        </button>
+                        <button
+                          onClick={() => removeBuilding(activePropIdx, bi)}
+                          title="Remove building"
+                          className="text-gray-300 hover:text-red-500 transition-colors shrink-0 ml-1"
+                        >
+                          <X className="h-4 w-4" />
                         </button>
                       </div>
 
@@ -569,12 +587,21 @@ export default function Onboarding({ user, onComplete }: OnboardingProps) {
                                 }}
                                 className="text-xs font-semibold text-gray-500 uppercase tracking-wider bg-transparent focus:outline-none w-24"
                               />
-                              <button
-                                onClick={() => addRoom(activePropIdx, bi, fi)}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                              >
-                                <Plus className="h-3 w-3" /> Room
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => addRoom(activePropIdx, bi, fi)}
+                                  className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                >
+                                  <Plus className="h-3 w-3" /> Room
+                                </button>
+                                <button
+                                  onClick={() => removeFloor(activePropIdx, bi, fi)}
+                                  title="Remove floor"
+                                  className="text-gray-300 hover:text-red-500 transition-colors"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
                             </div>
                             <div className="space-y-2">
                               {floor.rooms.map((room, ri) => {

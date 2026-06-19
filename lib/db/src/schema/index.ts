@@ -8,3 +8,4 @@ export * from "./guests";
 export * from "./payments";
 export * from "./complaints";
 export * from "./activity";
+export * from "./checkin";

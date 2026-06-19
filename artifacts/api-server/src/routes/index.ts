@@ -12,6 +12,7 @@ import staffRouter from "./staff";
 import dashboardRouter from "./dashboard";
 import activityRouter from "./activity";
 import aiRouter from "./ai";
+import checkinRouter from "./checkin";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(staffRouter);
 router.use(dashboardRouter);
 router.use(activityRouter);
 router.use(aiRouter);
+router.use(checkinRouter);
 
 export default router;

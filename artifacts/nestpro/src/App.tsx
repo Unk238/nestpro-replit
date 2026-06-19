@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import { PropertyProvider } from "@/components/property-provider";
 import LoginPage from "@/pages/login";
 import Onboarding from "@/pages/onboarding";
+import CheckInPortal from "@/pages/checkin-portal";
 
 import Dashboard from "@/pages/dashboard";
 import Properties from "@/pages/properties";
@@ -28,7 +29,16 @@ const BIZ_KEY = "nestpro_business";
 interface User { name: string; email: string }
 interface Business { name: string; phone: string; email: string; categories: string[] }
 
-function Router() {
+// Detect public check-in route before any auth check
+function getCheckinToken(): string | null {
+  const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+  const path = window.location.pathname;
+  const rel = path.startsWith(base) ? path.slice(base.length) : path;
+  const m = rel.match(/^\/checkin\/([a-f0-9]+)$/);
+  return m ? m[1] : null;
+}
+
+function MainRouter() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
@@ -48,6 +58,16 @@ function Router() {
 }
 
 function App() {
+  // Public check-in portal — served without login
+  const checkinToken = getCheckinToken();
+  if (checkinToken) {
+    return <CheckInPortal token={checkinToken} />;
+  }
+
+  return <AuthGate />;
+}
+
+function AuthGate() {
   const [user, setUser] = useState<User | null>(() => {
     try { return JSON.parse(localStorage.getItem(SESSION_KEY) ?? "null"); } catch { return null; }
   });
@@ -73,7 +93,7 @@ function App() {
       <TooltipProvider>
         <PropertyProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
+            <MainRouter />
           </WouterRouter>
         </PropertyProvider>
       </TooltipProvider>

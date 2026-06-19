@@ -1,0 +1,513 @@
+# RENT TRACK V3 - GUEST SELF CHECK-IN PORTAL
+
+## OBJECTIVE
+
+Transform guest onboarding from a manual receptionist process into a self-service digital check-in experience.
+
+The current Guest Management module behaves like a data entry form.
+
+This is inefficient.
+
+Instead, operators should generate a secure guest onboarding link and send it through:
+
+* WhatsApp
+* SMS
+* Email
+
+The guest should complete their own onboarding.
+
+All information should automatically populate inside Rent Track.
+
+---
+
+# NEW MODULE
+
+Guest Check-In Portal
+
+This is a public-facing page.
+
+Example:
+
+renttrack.in/checkin/abc123
+
+No login required.
+
+Mobile-first design.
+
+Optimized for WhatsApp opening.
+
+---
+
+# OPERATOR WORKFLOW
+
+Inside Guest Manager:
+
+Operator clicks:
+
+Generate Check-In Link
+
+System creates:
+
+Unique Guest Registration Link
+
+Example:
+
+renttrack.in/checkin/abc123
+
+Operator clicks:
+
+Share via WhatsApp
+
+System generates pre-filled WhatsApp message:
+
+"Welcome to My Home PG.
+
+Please complete your digital check-in using the link below.
+
+https://renttrack.in/checkin/abc123"
+
+---
+
+# GUEST PORTAL FLOW
+
+STEP 1
+
+Welcome Screen
+
+Display:
+
+Property Name
+
+Property Address
+
+Property Logo
+
+Property Contact Number
+
+Assigned Room (Optional)
+
+Check-In Date
+
+Expected Stay Duration
+
+---
+
+STEP 2
+
+Personal Information
+
+Collect:
+
+Full Name
+
+Phone Number
+
+Email Address
+
+Date Of Birth
+
+Gender
+
+Occupation
+
+College Or Company Name
+
+Current Address
+
+Permanent Address
+
+---
+
+STEP 3
+
+Emergency Contact
+
+Collect:
+
+Emergency Contact Name
+
+Relationship
+
+Emergency Contact Number
+
+Alternative Contact Number
+
+Parent Name
+
+Parent Contact Number
+
+Guardian Name
+
+Guardian Contact Number
+
+---
+
+STEP 4
+
+Identity Verification
+
+Guest uploads:
+
+Aadhaar Card
+
+Passport
+
+Driving License
+
+Voter ID
+
+Any Government ID
+
+Support:
+
+Front Image
+
+Back Image
+
+PDF Upload
+
+Image Upload
+
+Store securely inside Document Hub.
+
+---
+
+STEP 5
+
+Live Selfie Verification
+
+Guest takes:
+
+Live Selfie
+
+or
+
+Uploads Selfie
+
+Store in Guest Profile.
+
+---
+
+STEP 6
+
+Booking Source
+
+Ask:
+
+How did you book?
+
+Options:
+
+Direct Walk-In
+
+WhatsApp
+
+Google Search
+
+Booking.com
+
+Agoda
+
+Airbnb
+
+Hostelworld
+
+Makemytrip
+
+Goibibo
+
+OYO
+
+Travel Agent
+
+Other
+
+Store booking source.
+
+---
+
+STEP 7
+
+Booking Verification
+
+If booked via OTA:
+
+Collect:
+
+Booking ID
+
+Reservation Number
+
+OTA Name
+
+Allow upload:
+
+Booking Confirmation Screenshot
+
+Booking Invoice
+
+Reservation PDF
+
+Store in Documents.
+
+---
+
+STEP 8
+
+Payment Details
+
+Ask:
+
+How Much Was Paid?
+
+Payment Method:
+
+UPI
+
+Bank Transfer
+
+Cash
+
+Card
+
+Wallet
+
+Other
+
+Upload:
+
+Payment Screenshot
+
+Payment Receipt
+
+Transaction Proof
+
+Reference Number
+
+UTR Number
+
+Store inside Payment Records.
+
+---
+
+STEP 9
+
+Rental Information
+
+Collect:
+
+Security Deposit
+
+Monthly Rent
+
+Discount Given
+
+Advance Paid
+
+Balance Due
+
+Move-In Date
+
+Expected Move-Out Date
+
+---
+
+STEP 10
+
+Terms & Agreement
+
+Display:
+
+House Rules
+
+Property Rules
+
+Terms & Conditions
+
+Guest clicks:
+
+I Agree
+
+Digital Signature
+
+Optional.
+
+---
+
+STEP 11
+
+Submit Registration
+
+Display:
+
+Registration Submitted Successfully.
+
+Awaiting Approval.
+
+---
+
+# OPERATOR APPROVAL WORKFLOW
+
+Inside Rent Track Dashboard:
+
+New Registrations
+
+Show:
+
+Pending Verification
+
+Operator reviews:
+
+Documents
+
+Selfie
+
+Payment Proof
+
+Booking Details
+
+Emergency Contacts
+
+---
+
+Actions:
+
+Approve Guest
+
+Reject Guest
+
+Request More Information
+
+---
+
+APPROVE FLOW
+
+Automatically:
+
+Create Guest Record
+
+Assign Bed
+
+Assign Room
+
+Generate Ledger
+
+Generate Stay Record
+
+Generate Audit Log
+
+Generate Welcome Notification
+
+Generate WhatsApp Welcome Message
+
+---
+
+WHATSAPP AUTOMATION
+
+After approval:
+
+Send:
+
+Welcome Message
+
+Property WiFi
+
+Room Details
+
+Manager Contact
+
+Emergency Contact
+
+Rent Reminder Schedule
+
+Digital Receipt
+
+---
+
+DASHBOARD INTEGRATION
+
+Owner should see:
+
+Pending Registrations
+
+Approved Guests
+
+Rejected Registrations
+
+Missing Documents
+
+Pending Payments
+
+Pending Verification
+
+Today's Check-Ins
+
+Today's Check-Outs
+
+---
+
+DOCUMENT HUB INTEGRATION
+
+Store:
+
+Identity Documents
+
+Selfies
+
+Payment Screenshots
+
+Booking Screenshots
+
+Rental Agreements
+
+Invoices
+
+Receipts
+
+All linked to Guest Profile.
+
+---
+
+SECURITY REQUIREMENTS
+
+Each onboarding link must:
+
+Expire after use
+
+Be unique
+
+Support resending
+
+Support reopening until approved
+
+Track submission timestamp
+
+Track IP address
+
+Track device information
+
+Maintain audit trail
+
+---
+
+SUCCESS CRITERIA
+
+A PG owner should be able to:
+
+Create Guest
+
+Generate Link
+
+Send WhatsApp
+
+Guest completes onboarding
+
+Owner reviews
+
+Owner approves
+
+Guest automatically enters the Rent Track system
+
+Without manually typing guest information.
+
+This should become the default onboarding workflow across the platform.

@@ -1,21 +1,19 @@
-import { pgTable, serial, text, integer, timestamp, pgEnum } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { pgTable, pgEnum, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
-export const propertyTypeEnum = pgEnum("property_type", ["pg", "hostel", "co_living", "dormitory", "lodge"]);
+export const propertyTypeEnum = pgEnum('property_type', [
+  'pg', 'hostel', 'apartment', 'villa', 'co_living',
+]);
 
-export const propertiesTable = pgTable("properties", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  address: text("address").notNull(),
-  city: text("city").notNull(),
-  state: text("state"),
-  pincode: text("pincode"),
-  phone: text("phone"),
-  type: propertyTypeEnum("type").notNull().default("pg"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+export const properties = pgTable('properties', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  address: text('address'),
+  city: text('city'),
+  state: text('state'),
+  type: propertyTypeEnum('type').notNull().default('pg'),
+  description: text('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const insertPropertySchema = createInsertSchema(propertiesTable).omit({ id: true, createdAt: true });
-export type InsertProperty = z.infer<typeof insertPropertySchema>;
-export type Property = typeof propertiesTable.$inferSelect;
+export type Property = typeof properties.$inferSelect;
+export type NewProperty = typeof properties.$inferInsert;

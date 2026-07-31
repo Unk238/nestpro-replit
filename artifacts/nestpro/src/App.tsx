@@ -1,104 +1,71 @@
-import React, { useState } from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
-import { PropertyProvider } from "@/components/property-provider";
-import LoginPage from "@/pages/login";
-import Onboarding from "@/pages/onboarding";
-import CheckInPortal from "@/pages/checkin-portal";
+import React, { useState, useEffect } from 'react';
+import { Switch, Route, useLocation } from 'wouter';
+import { PropertyProvider } from './components/property-provider';
+import { OnboardingWizard } from './components/onboarding-wizard';
+import { Toaster } from './components/ui/toaster';
 
-import Dashboard from "@/pages/dashboard";
-import Properties from "@/pages/properties";
-import Explorer from "@/pages/explorer";
-import Guests from "@/pages/guests";
-import GuestDetail from "@/pages/guest-detail";
-import Payments from "@/pages/payments";
-import Complaints from "@/pages/complaints";
-import Staff from "@/pages/staff";
-import Activity from "@/pages/activity";
-import Settings from "@/pages/settings";
-import AIReceptionist from "@/pages/ai-receptionist";
+// Pages
+import LoginPage from './pages/login';
+import DashboardPage from './pages/dashboard';
+import PropertiesPage from './pages/properties';
+import ExplorerPage from './pages/explorer';
+import GuestsPage from './pages/guests';
+import GuestDetailPage from './pages/guest-detail';
+import PaymentsPage from './pages/payments';
+import ComplaintsPage from './pages/complaints';
+import StaffPage from './pages/staff';
+import ActivityPage from './pages/activity';
+import SettingsPage from './pages/settings';
+import AIPage from './pages/ai-receptionist';
+import CheckinPortalPage from './pages/checkin-portal';
+import NotFoundPage from './pages/not-found';
 
-const queryClient = new QueryClient();
+export default function App() {
+  const [location] = useLocation();
 
-const SESSION_KEY = "nestpro_user";
-const ONBOARD_KEY = "nestpro_onboarded";
-const BIZ_KEY = "nestpro_business";
-
-interface User { name: string; email: string }
-interface Business { name: string; phone: string; email: string; categories: string[] }
-
-// Detect public check-in route before any auth check
-function getCheckinToken(): string | null {
-  const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-  const path = window.location.pathname;
-  const rel = path.startsWith(base) ? path.slice(base.length) : path;
-  const m = rel.match(/^\/checkin\/([a-f0-9]+)$/);
-  return m ? m[1] : null;
-}
-
-function MainRouter() {
-  return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/properties" component={Properties} />
-      <Route path="/properties/:id/explorer" component={Explorer} />
-      <Route path="/guests" component={Guests} />
-      <Route path="/guests/:id" component={GuestDetail} />
-      <Route path="/payments" component={Payments} />
-      <Route path="/complaints" component={Complaints} />
-      <Route path="/staff" component={Staff} />
-      <Route path="/activity" component={Activity} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/ai" component={AIReceptionist} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
-function App() {
-  // Public check-in portal — served without login
-  const checkinToken = getCheckinToken();
-  if (checkinToken) {
-    return <CheckInPortal token={checkinToken} />;
+  // Public check-in portal — no auth required
+  if (/^\/checkin\//.test(location)) {
+    return (
+      <>
+        <Switch>
+          <Route path="/checkin/:token" component={CheckinPortalPage} />
+        </Switch>
+        <Toaster />
+      </>
+    );
   }
 
-  return <AuthGate />;
-}
+  const user = localStorage.getItem('nestpro_user');
+  const onboarded = localStorage.getItem('nestpro_onboarded');
 
-function AuthGate() {
-  const [user, setUser] = useState<User | null>(() => {
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY) ?? "null"); } catch { return null; }
-  });
-  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(ONBOARD_KEY));
+  if (!user) return <><LoginPage /><Toaster /></>;
 
-  const handleLogin = (u: User) => {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(u));
-    setUser(u);
-  };
-
-  const handleOnboardingComplete = (biz: Business) => {
-    localStorage.setItem(BIZ_KEY, JSON.stringify(biz));
-    localStorage.setItem(ONBOARD_KEY, "true");
-    setOnboarded(true);
-    queryClient.invalidateQueries();
-  };
-
-  if (!user) return <LoginPage onLogin={handleLogin} />;
-  if (!onboarded) return <Onboarding user={user} onComplete={handleOnboardingComplete} />;
+  if (!onboarded) {
+    return (
+      <PropertyProvider>
+        <OnboardingWizard onComplete={() => { window.location.href = '/'; }} />
+        <Toaster />
+      </PropertyProvider>
+    );
+  }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <PropertyProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <MainRouter />
-          </WouterRouter>
-        </PropertyProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <PropertyProvider>
+      <Switch>
+        <Route path="/" component={DashboardPage} />
+        <Route path="/properties" component={PropertiesPage} />
+        <Route path="/properties/:id/explorer" component={ExplorerPage} />
+        <Route path="/guests" component={GuestsPage} />
+        <Route path="/guests/:id" component={GuestDetailPage} />
+        <Route path="/payments" component={PaymentsPage} />
+        <Route path="/complaints" component={ComplaintsPage} />
+        <Route path="/staff" component={StaffPage} />
+        <Route path="/activity" component={ActivityPage} />
+        <Route path="/settings" component={SettingsPage} />
+        <Route path="/ai" component={AIPage} />
+        <Route component={NotFoundPage} />
+      </Switch>
+      <Toaster />
+    </PropertyProvider>
   );
 }
-
-export default App;

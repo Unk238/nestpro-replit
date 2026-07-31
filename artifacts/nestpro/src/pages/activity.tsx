@@ -1,69 +1,65 @@
-import React from "react";
-import { Layout } from "@/components/layout";
-import { useListActivityLogs } from "@workspace/api-client-react";
-import { usePropertyContext } from "@/components/property-provider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity as ActivityIcon } from "lucide-react";
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Activity } from 'lucide-react';
+import { Layout } from '@/components/layout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePropertyContext } from '@/components/property-provider';
+import { api } from '@/lib/api';
+import { formatRelativeTime } from '@/lib/utils';
 
-export default function Activity() {
-  const { activePropertyId } = usePropertyContext();
-  const { data: logs, isLoading } = useListActivityLogs({
-    query: { queryKey: ["listActivityLogs", activePropertyId] },
-    request: { query: { propertyId: activePropertyId || undefined, limit: 100 } } as any
+const ACTION_COLORS: Record<string, string> = {
+  checkin: 'bg-emerald-500',
+  checkout: 'bg-amber-500',
+  payment_recorded: 'bg-indigo-500',
+  complaint_created: 'bg-red-500',
+  complaint_updated: 'bg-blue-500',
+  created: 'bg-violet-500',
+  deleted: 'bg-slate-500',
+};
+
+export default function ActivityPage() {
+  const { activeProperty } = usePropertyContext();
+  const pid = activeProperty?.id;
+
+  const { data: activity = [], isLoading } = useQuery({
+    queryKey: ['activity', pid],
+    queryFn: () => api.getActivity({ propertyId: pid, limit: 100 }),
+    refetchInterval: 30_000,
   });
 
-  if (isLoading) return <Layout><div className="flex h-full items-center justify-center">Loading activity log...</div></Layout>;
-
   return (
-    <Layout>
-      <div className="space-y-6 max-w-4xl mx-auto">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Audit Log</h1>
-          <p className="text-muted-foreground mt-1">Timeline of all actions across your properties.</p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <ActivityIcon className="mr-2 h-5 w-5 text-primary" />
-              System Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="relative border-l border-muted ml-4 space-y-8 pb-4">
-              {logs?.map((log, index) => (
-                <div key={log.id} className="relative pl-6">
-                  <div className="absolute w-3 h-3 bg-primary rounded-full -left-[6.5px] top-1.5 ring-4 ring-background" />
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-1">
-                    <h4 className="font-semibold text-sm">{log.description}</h4>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap sm:ml-4">
-                      {new Date(log.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <span className="text-xs uppercase tracking-wider bg-muted px-2 py-1 rounded font-medium">
-                      {log.action}
-                    </span>
-                    <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-1 rounded">
-                      {log.entity} #{log.entityId}
-                    </span>
-                    {log.propertyName && (
-                      <span className="text-xs border px-2 py-1 rounded">
-                        @ {log.propertyName}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {(!logs || logs.length === 0) && (
-                <div className="pl-6 text-muted-foreground py-8">
-                  No activity recorded yet.
-                </div>
-              )}
+    <Layout title="Activity Log">
+      <Card>
+        <CardContent className="p-6">
+          {isLoading ? (
+            <div className="space-y-4">{Array(8).fill(0).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
+          ) : (activity as any[]).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Activity className="h-16 w-16 text-muted-foreground/30 mb-4" />
+              <p className="text-foreground font-medium">No activity yet</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <div className="relative">
+              <div className="absolute left-[19px] top-0 h-full w-px bg-border" />
+              <div className="space-y-6">
+                {(activity as any[]).map((a: any) => (
+                  <div key={a.id} className="flex items-start gap-4 relative">
+                    <div className={`flex-shrink-0 h-[10px] w-[10px] rounded-full mt-1.5 ring-2 ring-background ${ACTION_COLORS[a.action] ?? 'bg-indigo-500'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground">{a.description}</p>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                        <span>{formatRelativeTime(a.createdAt)}</span>
+                        {a.propertyName && <><span>·</span><span>{a.propertyName}</span></>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </Layout>
   );
 }

@@ -1,39 +1,48 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
-type PropertyContextType = {
-  activePropertyId: number | null;
-  setActivePropertyId: (id: number | null) => void;
-};
+interface PropertyContextValue {
+  activeProperty: any | null;
+  setActiveProperty: (p: any) => void;
+  properties: any[];
+  isLoading: boolean;
+}
 
-const PropertyContext = createContext<PropertyContextType>({
-  activePropertyId: null,
-  setActivePropertyId: () => {},
+const PropertyContext = createContext<PropertyContextValue>({
+  activeProperty: null,
+  setActiveProperty: () => {},
+  properties: [],
+  isLoading: false,
 });
 
-export const PropertyProvider = ({ children }: { children: React.ReactNode }) => {
-  const [activePropertyId, setActivePropertyId] = useState<number | null>(null);
+export function PropertyProvider({ children }: { children: React.ReactNode }) {
+  const { data: properties = [], isLoading } = useQuery({
+    queryKey: ['properties'],
+    queryFn: api.getProperties,
+  });
+
+  const [activeProperty, setActivePropertyState] = useState<any | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("nestpro_active_property");
-    if (saved) {
-      setActivePropertyId(Number(saved));
-    }
-  }, []);
+    if (properties.length === 0) return;
+    const stored = localStorage.getItem('nestpro_active_property');
+    const found = stored ? properties.find((p: any) => p.id === parseInt(stored)) : null;
+    setActivePropertyState(found ?? properties[0]);
+  }, [properties]);
 
-  const handleSetActivePropertyId = (id: number | null) => {
-    setActivePropertyId(id);
-    if (id) {
-      localStorage.setItem("nestpro_active_property", String(id));
-    } else {
-      localStorage.removeItem("nestpro_active_property");
-    }
+  const setActiveProperty = (p: any) => {
+    setActivePropertyState(p);
+    localStorage.setItem('nestpro_active_property', String(p.id));
   };
 
   return (
-    <PropertyContext.Provider value={{ activePropertyId, setActivePropertyId: handleSetActivePropertyId }}>
+    <PropertyContext.Provider value={{ activeProperty, setActiveProperty, properties, isLoading }}>
       {children}
     </PropertyContext.Provider>
   );
-};
+}
 
-export const usePropertyContext = () => useContext(PropertyContext);
+export function usePropertyContext() {
+  return useContext(PropertyContext);
+}

@@ -1,113 +1,44 @@
-import { Router } from "express";
-import { db, propertiesTable, guestsTable, paymentsTable, complaintsTable, bedsTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { Router } from 'express';
+import { db, guests, payments, beds } from '@workspace/db';
+import { eq, and, count } from 'drizzle-orm';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
 
-async function getBusinessContext(): Promise<string> {
-  try {
-    const allProperties = await db.select().from(propertiesTable);
-    const activeGuests = await db
-      .select()
-      .from(guestsTable)
-      .where(eq(guestsTable.status, "active"));
-    const pendingPayments = await db
-      .select()
-      .from(paymentsTable)
-      .where(eq(paymentsTable.status, "pending"));
-    const openComplaints = await db
-      .select()
-      .from(complaintsTable)
-      .where(sql`${complaintsTable.status} NOT IN ('resolved','closed')`);
-    const totalBeds = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bedsTable);
-    const occupiedBeds = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bedsTable)
-      .where(eq(bedsTable.status, "occupied"));
+router.post('/ai/chat', async (req, res) => {
+  const { message, propertyId } = req.body;
+  if (!message) return res.status(400).json({ error: 'message is required' });
 
-    return `
-You are NestPro AI Receptionist — a smart business copilot for an Indian PG/hostel owner.
+  // Fetch DB context
+  const guestFilter = propertyId ? eq(guests.propertyId, parseInt(propertyId)) : undefined;
+  const activeGuests = await db.select({ name: guests.name, phone: guests.phone, status: guests.status })
+    .from(guests).where(and(guestFilter, eq(guests.status, 'active'))).limit(30);
 
-Current business snapshot:
-- Properties: ${allProperties.length} (${allProperties.map((p) => p.name).join(", ") || "none yet"})
-- Active guests: ${activeGuests.length}
-- Total beds: ${totalBeds[0]?.count ?? 0} | Occupied: ${occupiedBeds[0]?.count ?? 0}
-- Pending payments: ${pendingPayments.length}
-- Open complaints: ${openComplaints.length}
+  const [overdueRow] = await db.select({ cnt: count() }).from(payments).where(eq(payments.status, 'overdue'));
+  const [availableRow] = await db.select({ cnt: count() }).from(beds).where(eq(beds.status, 'available'));
 
-Properties:
-${allProperties.map((p) => `  • ${p.name} | ${p.city}, ${p.state}`).join("\n") || "  None yet"}
+  const context = `You are NestPro AI Receptionist — a helpful assistant for a PG/hostel management system in India.
+Current data:
+- Active guests (${activeGuests.length}): ${activeGuests.map((g) => g.name).join(', ') || 'None'}
+- Overdue payments: ${overdueRow?.cnt ?? 0}
+- Available beds: ${availableRow?.cnt ?? 0}
+Answer the operator's question concisely. If asked about a specific guest or payment not in this data, say you don't have that detail handy.`;
 
-Active guests (first 10):
-${activeGuests.slice(0, 10).map((g) => `  • ${g.name} | ${g.phone} | Bed #${g.bedId}`).join("\n") || "  None yet"}
-
-Pending payments (first 10):
-${pendingPayments.slice(0, 10).map((p) => `  • Guest #${p.guestId} | ₹${p.amount} | ${p.month}/${p.year}`).join("\n") || "  None"}
-
-Open complaints (first 5):
-${openComplaints.slice(0, 5).map((c) => `  • ${c.title} (${c.status})`).join("\n") || "  None"}
-
-Instructions:
-- Answer concisely and helpfully. Use ₹ for currency.
-- When asked to generate messages (WhatsApp, SMS, reminders), write them in ready-to-send format.
-- If data is missing, say so clearly rather than guessing.
-    `.trim();
-  } catch {
-    return "You are NestPro AI Receptionist — a smart copilot for an Indian PG/hostel owner. Help the owner manage guests, payments, complaints, and rooms.";
-  }
-}
-
-router.post("/ai/chat", async (req, res) => {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    res.status(503).json({
-      error: "AI Receptionist is not configured yet. Add your OPENAI_API_KEY in the Replit Secrets tab to enable this feature.",
-    });
-    return;
-  }
-
-  const { messages } = req.body as { messages: { role: string; content: string }[] };
-  if (!Array.isArray(messages) || messages.length === 0) {
-    res.status(400).json({ error: "messages array is required" });
-    return;
+  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+    // Mock response when API key not configured
+    const mockResponses: Record<string, string> = {
+      default: `Based on current data: ${activeGuests.length} active guests, ${overdueRow?.cnt ?? 0} overdue payments, ${availableRow?.cnt ?? 0} available beds. Please add your Gemini API key to enable full AI responses.`,
+    };
+    return res.json({ message: mockResponses.default });
   }
 
   try {
-    const systemPrompt = await getBusinessContext();
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages.slice(-20),
-        ],
-        max_tokens: 800,
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      const msg = (err as any)?.error?.message ?? `OpenAI error ${response.status}`;
-      res.status(502).json({ error: msg });
-      return;
-    }
-
-    const data = (await response.json()) as { choices: { message: { content: string } }[] };
-    const reply = data.choices?.[0]?.message?.content ?? "I couldn't generate a response. Please try again.";
-    res.json({ message: reply });
-  } catch (err: unknown) {
-    req.log.error(err, "AI chat error");
-    res.status(500).json({ error: "Failed to reach OpenAI. Please try again." });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const result = await model.generateContent(`${context}\n\nOperator: ${message}`);
+    res.json({ message: result.response.text() });
+  } catch (err: any) {
+    res.status(500).json({ error: 'AI service error: ' + err.message });
   }
 });
 

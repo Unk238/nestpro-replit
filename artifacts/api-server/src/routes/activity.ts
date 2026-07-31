@@ -1,44 +1,18 @@
-import { Router } from "express";
-import { db, activityLogsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { Router } from 'express';
+import { db, activityLogs } from '@workspace/db';
+import { eq, sql } from 'drizzle-orm';
 
 const router = Router();
 
-export async function logActivity(
-  action: string,
-  entity: string,
-  entityId?: number,
-  description?: string,
-  propertyId?: number,
-  propertyName?: string
-) {
-  try {
-    await db.insert(activityLogsTable).values({
-      action,
-      entity,
-      entityId,
-      description: description ?? `${action} ${entity}`,
-      propertyId,
-      propertyName,
-    });
-  } catch {
-    // silently swallow logging errors
-  }
-}
+router.get('/activity', async (req, res) => {
+  const propertyId = req.query.propertyId ? parseInt(req.query.propertyId as string) : undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
 
-router.get("/activity", async (req, res) => {
-  try {
-    const limit = parseInt((req.query.limit as string) ?? "50");
-    const propertyId = req.query.propertyId ? parseInt(req.query.propertyId as string) : undefined;
-
-    let query = db.select().from(activityLogsTable).orderBy(desc(activityLogsTable.createdAt)).limit(limit);
-    const rows = await query;
-    const filtered = propertyId ? rows.filter((r) => r.propertyId === propertyId || r.propertyId == null) : rows;
-    res.json(filtered);
-  } catch (err) {
-    req.log.error({ err }, "Failed to list activity");
-    res.status(500).json({ error: "Internal server error" });
-  }
+  const rows = await db.select().from(activityLogs)
+    .where(propertyId ? eq(activityLogs.propertyId, propertyId) : undefined)
+    .orderBy(sql`${activityLogs.createdAt} desc`)
+    .limit(limit);
+  res.json(rows);
 });
 
 export default router;

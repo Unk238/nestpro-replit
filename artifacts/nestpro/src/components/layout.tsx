@@ -1,232 +1,166 @@
-import React from "react";
-import { Link, useLocation } from "wouter";
+import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import {
-  Building2, Users, CreditCard, LayoutDashboard, AlertCircle,
-  UserCircle, Activity, Settings, Sparkles, LogOut,
-} from "lucide-react";
-import { usePropertyContext } from "./property-provider";
-import { useListProperties } from "@workspace/api-client-react";
+  LayoutDashboard, Building2, Users, CreditCard, AlertTriangle,
+  UserCog, Activity, Bot, Settings, LogOut, ChevronDown, Home,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { usePropertyContext } from './property-provider';
+import { api } from '@/lib/api';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Toaster } from "@/components/ui/toaster";
-import { useQuery } from "@tanstack/react-query";
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { getInitials } from '@/lib/utils';
+import { Toaster } from './ui/toaster';
 
-const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-async function fetchSubmissions() {
-  const res = await fetch(`${BASE}/api/checkin/submissions`);
-  if (!res.ok) return [];
-  return res.json();
+const navItems = [
+  { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
+  { label: 'Properties', icon: Building2, href: '/properties' },
+  { label: 'Guests', icon: Users, href: '/guests', badge: true },
+  { label: 'Payments', icon: CreditCard, href: '/payments' },
+  { label: 'Complaints', icon: AlertTriangle, href: '/complaints' },
+  { label: 'Staff', icon: UserCog, href: '/staff' },
+  { label: 'Activity', icon: Activity, href: '/activity' },
+  { label: 'AI Receptionist', icon: Bot, href: '/ai' },
+  { label: 'Settings', icon: Settings, href: '/settings' },
+];
+
+interface LayoutProps {
+  children: React.ReactNode;
+  title: string;
 }
 
-function usePendingCount() {
-  const { data } = useQuery({
-    queryKey: ["checkin-submissions-count"],
-    queryFn: fetchSubmissions,
+export function Layout({ children, title }: LayoutProps) {
+  const [location, navigate] = useLocation();
+  const { activeProperty, setActiveProperty, properties } = usePropertyContext();
+  const user = JSON.parse(localStorage.getItem('nestpro_user') || '{}');
+
+  // Poll for pending check-in submissions every 30s
+  const { data: submissions = [] } = useQuery({
+    queryKey: ['checkin-submissions'],
+    queryFn: api.getCheckinSubmissions,
     refetchInterval: 30_000,
   });
-  if (!Array.isArray(data)) return 0;
-  return data.filter((s: any) => s.status === "submitted").length;
-}
+  const pendingCount = submissions.length;
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Properties", href: "/properties", icon: Building2 },
-  { name: "Guests", href: "/guests", icon: Users, badge: "pending" },
-  { name: "Payments", href: "/payments", icon: CreditCard },
-  { name: "Complaints", href: "/complaints", icon: AlertCircle },
-  { name: "Team", href: "/staff", icon: UserCircle },
-  { name: "Activity", href: "/activity", icon: Activity },
-];
-
-const bottomNav = [
-  { name: "AI Receptionist", href: "/ai", icon: Sparkles },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
-
-function getUserInitials(name: string) {
-  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-}
-
-function getUser(): { name: string; email: string } | null {
-  try { return JSON.parse(localStorage.getItem("nestpro_user") ?? "null"); } catch { return null; }
-}
-
-function getBusiness(): { name: string } | null {
-  try { return JSON.parse(localStorage.getItem("nestpro_business") ?? "null"); } catch { return null; }
-}
-
-function handleLogout() {
-  localStorage.removeItem("nestpro_user");
-  localStorage.removeItem("nestpro_onboarded");
-  localStorage.removeItem("nestpro_business");
-  localStorage.removeItem("nestpro_active_property");
-  window.location.reload();
-}
-
-export function Layout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
-  const { activePropertyId, setActivePropertyId } = usePropertyContext();
-  const { data: properties = [] } = useListProperties();
-  const user = getUser();
-  const biz = getBusiness();
-  const pendingCount = usePendingCount();
-
-  React.useEffect(() => {
-    if (!activePropertyId && properties.length > 0) {
-      setActivePropertyId(properties[0].id);
-    }
-  }, [activePropertyId, properties, setActivePropertyId]);
+  const handleLogout = () => {
+    localStorage.removeItem('nestpro_user');
+    localStorage.removeItem('nestpro_onboarded');
+    window.location.href = '/';
+  };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-full min-h-screen bg-background">
       {/* Sidebar */}
-      <div className="w-60 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-sm">
-        {/* Brand */}
-        <div className="h-14 flex items-center px-5 border-b border-gray-100">
-          <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Building2 className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900 leading-none">
-                {biz?.name ?? "NestPro"}
-              </p>
-              {biz?.name && <p className="text-[10px] text-gray-400 mt-0.5">NestPro</p>}
-            </div>
+      <aside className="fixed left-0 top-0 h-full w-64 flex flex-col border-r border-border bg-[#0d1526] z-40">
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30">
+            <Home className="h-4 w-4 text-white" />
           </div>
+          <span className="text-lg font-bold gradient-text">NestPro</span>
         </div>
 
-        {/* Property switcher */}
-        {properties.length > 0 && (
-          <div className="px-4 pt-4 pb-2">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-1">Active Property</p>
-            <Select
-              value={activePropertyId ? String(activePropertyId) : ""}
-              onValueChange={(val) => setActivePropertyId(Number(val))}
-            >
-              <SelectTrigger className="w-full h-9 text-xs bg-gray-50 border-gray-200">
-                <SelectValue placeholder="Select Property" />
-              </SelectTrigger>
-              <SelectContent>
-                {properties.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)} className="text-xs">
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        {/* Property selector */}
+        <div className="px-4 py-3 border-b border-border">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm bg-secondary/50 hover:bg-secondary transition-colors">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                  <span className="truncate text-foreground font-medium">
+                    {activeProperty?.name ?? 'Select property'}
+                  </span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              {properties.map((p: any) => (
+                <DropdownMenuItem key={p.id} onClick={() => setActiveProperty(p)} className="cursor-pointer">
+                  <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span className="truncate">{p.name}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-        {/* Main nav */}
-        <nav className="flex-1 py-3 px-3 space-y-0.5 overflow-y-auto">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Menu</p>
-          {navigation.map((item) => {
-            const isActive = location === item.href ||
-              (item.href !== "/" && location.startsWith(item.href));
-            const showBadge = item.badge === "pending" && pendingCount > 0;
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+          {navItems.map((item) => {
+            const isActive = location === item.href || (item.href !== '/' && location.startsWith(item.href));
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+              <button
+                key={item.href}
+                onClick={() => navigate(item.href)}
+                className={cn(
+                  'relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+                    ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/10 text-indigo-300 border border-indigo-500/20'
+                    : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
+                )}
               >
-                <item.icon className={`mr-2.5 shrink-0 h-4 w-4 ${isActive ? "text-blue-600" : "text-gray-400"}`} />
-                {item.name}
-                {showBadge && (
-                  <span className="ml-auto text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500" />
+                )}
+                <item.icon className={cn('h-4 w-4 flex-shrink-0', isActive && 'text-indigo-400')} />
+                <span>{item.label}</span>
+                {item.badge && pendingCount > 0 && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold border border-amber-500/30">
                     {pendingCount}
                   </span>
                 )}
-                {!showBadge && isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />}
-              </Link>
+              </button>
             );
           })}
-
-          <div className="pt-3 mt-3 border-t border-gray-100 space-y-0.5">
-            {bottomNav.map((item) => {
-              const isActive = location === item.href || location.startsWith(item.href);
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                    isActive
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  <item.icon className={`mr-2.5 shrink-0 h-4 w-4 ${
-                    item.name === "AI Receptionist"
-                      ? isActive ? "text-purple-600" : "text-purple-400"
-                      : isActive ? "text-blue-600" : "text-gray-400"
-                  }`} />
-                  {item.name}
-                  {item.name === "AI Receptionist" && (
-                    <span className="ml-auto text-[9px] font-bold bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full">AI</span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
         </nav>
 
-        {/* User section */}
-        <div className="p-3 border-t border-gray-100">
-          <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-gray-50 group">
-            <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold shrink-0">
-              {user ? getUserInitials(user.name) : "?"}
+        {/* User footer */}
+        <div className="border-t border-border px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="text-xs">{getInitials(user.email ?? 'U')}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">{user.email ?? 'Admin'}</p>
+                <p className="text-[10px] text-muted-foreground">Owner</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-900 truncate">{user?.name ?? "User"}</p>
-              <p className="text-[10px] text-gray-400 truncate">{user?.email ?? ""}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
-              title="Sign out"
-            >
-              <LogOut className="h-3.5 w-3.5" />
+            <button onClick={handleLogout} className="rounded-md p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-8 shrink-0">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900 capitalize">
-              {location === "/" ? "Dashboard" :
-               location === "/ai" ? "AI Receptionist" :
-               location.split("/")[1].replace(/-/g, " ")}
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            {pendingCount > 0 && (
-              <Link href="/guests">
-                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-amber-100 transition cursor-pointer">
-                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                  {pendingCount} pending registration{pendingCount !== 1 ? "s" : ""}
-                </div>
-              </Link>
-            )}
-            {properties.length > 0 && activePropertyId && (
-              <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                {properties.find((p) => p.id === activePropertyId)?.name ?? ""}
+      <main className="flex-1 ml-64 flex flex-col min-h-screen">
+        <header className="sticky top-0 z-30 flex h-14 items-center border-b border-border bg-background/80 backdrop-blur px-6">
+          <h1 className="text-base font-semibold text-foreground">{title}</h1>
+          <div className="ml-auto flex items-center gap-3">
+            {activeProperty && (
+              <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-md">
+                {activeProperty.name}
               </span>
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-8">
-          {children}
-        </main>
-      </div>
+        <div className="flex-1 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {children}
+          </motion.div>
+        </div>
+      </main>
+
       <Toaster />
     </div>
   );

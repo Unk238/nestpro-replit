@@ -1,62 +1,38 @@
-import { Router } from "express";
-import { db, buildingsTable, propertiesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { logActivity } from "./activity";
+import { Router } from 'express';
+import { db, buildings, properties } from '@workspace/db';
+import { eq } from 'drizzle-orm';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
 
-// List buildings in a property
-router.get("/properties/:propertyId/buildings", async (req, res) => {
-  try {
-    const propertyId = parseInt(req.params.propertyId);
-    const rows = await db.select().from(buildingsTable).where(eq(buildingsTable.propertyId, propertyId)).orderBy(buildingsTable.createdAt);
-    res.json(rows);
-  } catch (err) {
-    req.log.error({ err }, "Failed to list buildings");
-    res.status(500).json({ error: "Internal server error" });
-  }
+router.get('/properties/:propertyId/buildings', async (req, res) => {
+  const propertyId = parseInt(req.params.propertyId);
+  const result = await db.select().from(buildings).where(eq(buildings.propertyId, propertyId)).orderBy(buildings.createdAt);
+  res.json(result);
 });
 
-// Create building
-router.post("/properties/:propertyId/buildings", async (req, res) => {
-  try {
-    const propertyId = parseInt(req.params.propertyId);
-    const { name, description } = req.body;
-    if (!name) return res.status(400).json({ error: "name required" });
-    const [prop] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, propertyId));
-    const [building] = await db.insert(buildingsTable).values({ propertyId, name, description }).returning();
-    await logActivity("created", "building", building.id, `Added building "${building.name}"`, propertyId, prop?.name);
-    res.status(201).json(building);
-  } catch (err) {
-    req.log.error({ err }, "Failed to create building");
-    res.status(500).json({ error: "Internal server error" });
-  }
+router.post('/properties/:propertyId/buildings', async (req, res) => {
+  const propertyId = parseInt(req.params.propertyId);
+  const { name, totalFloors } = req.body;
+  if (!name) return res.status(400).json({ error: 'name is required' });
+  const [prop] = await db.select().from(properties).where(eq(properties.id, propertyId));
+  const [building] = await db.insert(buildings).values({ propertyId, name, totalFloors }).returning();
+  await logActivity({ action: 'created', entity: 'building', entityId: building.id, description: `Building "${name}" created`, propertyId, propertyName: prop?.name });
+  res.status(201).json(building);
 });
 
-// Update building
-router.patch("/buildings/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const { name, description } = req.body;
-    const [building] = await db.update(buildingsTable).set({ name, description }).where(eq(buildingsTable.id, id)).returning();
-    if (!building) return res.status(404).json({ error: "Not found" });
-    res.json(building);
-  } catch (err) {
-    req.log.error({ err }, "Failed to update building");
-    res.status(500).json({ error: "Internal server error" });
-  }
+router.patch('/buildings/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { name, totalFloors } = req.body;
+  const [building] = await db.update(buildings).set({ name, totalFloors }).where(eq(buildings.id, id)).returning();
+  if (!building) return res.status(404).json({ error: 'Not found' });
+  res.json(building);
 });
 
-// Delete building
-router.delete("/buildings/:id", async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    await db.delete(buildingsTable).where(eq(buildingsTable.id, id));
-    res.status(204).end();
-  } catch (err) {
-    req.log.error({ err }, "Failed to delete building");
-    res.status(500).json({ error: "Internal server error" });
-  }
+router.delete('/buildings/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  await db.delete(buildings).where(eq(buildings.id, id));
+  res.json({ ok: true });
 });
 
 export default router;

@@ -1,25 +1,25 @@
 {
   "name": "@workspace/db",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "push": "drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
+    "push": "drizzle-kit push",
+    "studio": "drizzle-kit studio",
+    "generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "drizzle-orm": "catalog:",
-    "drizzle-zod": "^0.8.3",
-    "pg": "^8.20.0",
-    "zod": "catalog:"
+    "@electric-sql/pglite": "^0.5.4",
+    "drizzle-orm": "^0.32.2",
+    "pg": "^8.12.0"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "@types/pg": "^8.20.0",
-    "drizzle-kit": "^0.31.10"
+    "@types/pg": "^8.11.6",
+    "dotenv": "^16.4.5",
+    "drizzle-kit": "^0.23.2",
+    "typescript": "^5.5.0"
   }
 }

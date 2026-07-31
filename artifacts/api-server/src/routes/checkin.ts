@@ -1,256 +1,102 @@
-import { Router } from "express";
-import { db, propertiesTable, bedsTable, checkinTokensTable, guestsTable, roomsTable, floorsTable, buildingsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
-import { randomBytes } from "crypto";
-import { logActivity } from "./activity";
+import { Router } from 'express';
+import { db, checkinTokens, properties, beds, guests } from '@workspace/db';
+import { eq, and } from 'drizzle-orm';
+import crypto from 'crypto';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
 
-// Generate a check-in link token (operator)
-router.post("/checkin/generate", async (req, res) => {
+// POST /checkin/generate — operator creates token
+router.post('/checkin/generate', async (req, res) => {
   const { propertyId, bedId } = req.body;
-  if (!propertyId) {
-    res.status(400).json({ error: "propertyId is required" });
-    return;
-  }
-  try {
-    const token = randomBytes(18).toString("hex");
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    const [row] = await db.insert(checkinTokensTable).values({
-      token,
-      propertyId: Number(propertyId),
-      bedId: bedId ? Number(bedId) : null,
-      expiresAt,
-    }).returning();
-
-    res.status(201).json({ id: row.id, token: row.token, expiresAt: row.expiresAt });
-  } catch (err) {
-    req.log.error(err, "Failed to generate checkin token");
-    res.status(500).json({ error: "Internal server error" });
-  }
+  if (!propertyId) return res.status(400).json({ error: 'propertyId is required' });
+  const token = crypto.randomBytes(20).toString('hex');
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const [record] = await db.insert(checkinTokens).values({ token, propertyId, bedId, expiresAt }).returning();
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  res.status(201).json({ id: record.id, token, url: `${baseUrl}/checkin/${token}`, expiresAt });
 });
 
-// Operator: list pending/submitted registrations
-router.get("/checkin/submissions", async (req, res) => {
-  try {
-    const rows = await db.select().from(checkinTokensTable)
-      .orderBy(checkinTokensTable.createdAt);
-
-    const enriched = await Promise.all(
-      rows.map(async (row) => {
-        const [prop] = await db.select({ name: propertiesTable.name })
-          .from(propertiesTable).where(eq(propertiesTable.id, row.propertyId));
-        return {
-          ...row,
-          propertyName: prop?.name ?? "Unknown",
-          guestName: (row.submittedData as any)?.fullName ?? null,
-          guestPhone: (row.submittedData as any)?.phone ?? null,
-        };
-      })
-    );
-
-    res.json(enriched);
-  } catch (err) {
-    req.log.error(err, "Failed to list submissions");
-    res.status(500).json({ error: "Internal server error" });
-  }
+// GET /checkin/submissions — BEFORE /:token to avoid conflict
+router.get('/checkin/submissions', async (req, res) => {
+  const all = req.query.all === 'true';
+  const rows = await db
+    .select({
+      id: checkinTokens.id, token: checkinTokens.token, status: checkinTokens.status,
+      submittedData: checkinTokens.submittedData, notes: checkinTokens.notes,
+      createdAt: checkinTokens.createdAt, expiresAt: checkinTokens.expiresAt,
+      propertyId: checkinTokens.propertyId, bedId: checkinTokens.bedId,
+      propertyName: properties.name,
+    })
+    .from(checkinTokens)
+    .leftJoin(properties, eq(checkinTokens.propertyId, properties.id))
+    .where(all ? undefined : eq(checkinTokens.status, 'submitted'))
+    .orderBy(checkinTokens.createdAt);
+  res.json(rows);
 });
 
-// Operator: approve a registration
-router.post("/checkin/submissions/:id/approve", async (req, res) => {
-  const id = Number(req.params.id);
-  try {
-    const [row] = await db.select().from(checkinTokensTable).where(eq(checkinTokensTable.id, id));
-    if (!row) {
-      res.status(404).json({ error: "Submission not found." });
-      return;
-    }
-    if (row.status !== "submitted") {
-      res.status(400).json({ error: "Submission is not in submitted state." });
-      return;
-    }
+// POST /checkin/submissions/:id/approve — BEFORE /:token
+router.post('/checkin/submissions/:id/approve', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const [token] = await db.select().from(checkinTokens).where(eq(checkinTokens.id, id));
+  if (!token) return res.status(404).json({ error: 'Not found' });
 
-    const data = row.submittedData as any;
-    const { bedId: overrideBedId } = req.body;
-    const finalBedId = overrideBedId ? Number(overrideBedId) : (data.selectedBedId ? Number(data.selectedBedId) : row.bedId);
+  const data = token.submittedData as any;
+  if (!data) return res.status(400).json({ error: 'No submission data' });
 
-    if (!finalBedId) {
-      res.status(400).json({ error: "A bed must be assigned before approval." });
-      return;
-    }
+  const [guest] = await db.insert(guests).values({
+    name: data.name, phone: data.phone, email: data.email, aadhaar: data.aadhaar,
+    emergencyContact: data.emergencyContact, emergencyPhone: data.emergencyPhone,
+    occupation: data.occupation, hometown: data.hometown,
+    bedId: token.bedId, propertyId: token.propertyId,
+    checkInDate: data.checkInDate, monthlyRent: data.monthlyRent?.toString(),
+    depositAmount: data.depositAmount?.toString(), notes: data.notes, status: 'active',
+  }).returning();
 
-    await db.update(bedsTable).set({ status: "occupied" }).where(eq(bedsTable.id, finalBedId));
-
-    const [guest] = await db.insert(guestsTable).values({
-      name: data.fullName,
-      phone: data.phone,
-      email: data.email ?? null,
-      aadhaar: data.aadhaar ?? null,
-      emergencyContact: data.emergencyName ?? null,
-      emergencyPhone: data.emergencyPhone ?? null,
-      occupation: data.occupation ?? null,
-      hometown: data.currentAddress ?? null,
-      bedId: finalBedId,
-      propertyId: row.propertyId,
-      checkInDate: data.checkInDate ?? new Date().toISOString().split("T")[0],
-      checkOutDate: data.checkOutDate ?? null,
-      monthlyRent: String(data.monthlyRent ?? "0"),
-      depositAmount: data.depositAmount ? String(data.depositAmount) : null,
-      status: "active",
-      notes: `Booked via: ${data.bookingSource ?? "self-check-in portal"}. Stay type: ${data.stayType ?? "monthly"}.`,
-    }).returning();
-
-    await db.update(checkinTokensTable).set({ status: "approved" }).where(eq(checkinTokensTable.id, row.id));
-
-    const [prop] = await db.select({ name: propertiesTable.name })
-      .from(propertiesTable).where(eq(propertiesTable.id, row.propertyId));
-    await logActivity("check_in", "guest", guest.id, `${guest.name} approved via self check-in portal`, row.propertyId, prop?.name);
-
-    res.json({
-      ...guest,
-      monthlyRent: Number(guest.monthlyRent),
-      depositAmount: guest.depositAmount ? Number(guest.depositAmount) : null,
-    });
-  } catch (err) {
-    req.log.error(err, "Failed to approve submission");
-    res.status(500).json({ error: "Internal server error" });
+  if (token.bedId) {
+    await db.update(beds).set({ status: 'occupied' }).where(eq(beds.id, token.bedId));
   }
+  await db.update(checkinTokens).set({ status: 'approved' }).where(eq(checkinTokens.id, id));
+
+  const [prop] = await db.select().from(properties).where(eq(properties.id, token.propertyId));
+  await logActivity({ action: 'checkin_approved', entity: 'guest', entityId: guest.id, description: `${data.name} self check-in approved`, propertyId: token.propertyId, propertyName: prop?.name });
+  res.json(guest);
 });
 
-// Operator: reject a registration
-router.post("/checkin/submissions/:id/reject", async (req, res) => {
-  const id = Number(req.params.id);
-  try {
-    const [row] = await db.select().from(checkinTokensTable).where(eq(checkinTokensTable.id, id));
-    if (!row) {
-      res.status(404).json({ error: "Submission not found." });
-      return;
-    }
-    await db.update(checkinTokensTable)
-      .set({ status: "rejected", notes: req.body.reason ?? null })
-      .where(eq(checkinTokensTable.id, id));
-
-    res.json({ success: true });
-  } catch (err) {
-    req.log.error(err, "Failed to reject submission");
-    res.status(500).json({ error: "Internal server error" });
-  }
+// POST /checkin/submissions/:id/reject — BEFORE /:token
+router.post('/checkin/submissions/:id/reject', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { notes } = req.body;
+  const [token] = await db.update(checkinTokens).set({ status: 'rejected', notes }).where(eq(checkinTokens.id, id)).returning();
+  if (!token) return res.status(404).json({ error: 'Not found' });
+  res.json({ ok: true });
 });
 
-// Public: get property info for a token
-router.get("/checkin/:token", async (req, res) => {
+// GET /checkin/:token — public, AFTER fixed routes
+router.get('/checkin/:token', async (req, res) => {
   const { token } = req.params;
-  try {
-    const [row] = await db.select().from(checkinTokensTable).where(eq(checkinTokensTable.token, token));
-    if (!row) {
-      res.status(404).json({ error: "Invalid or expired check-in link." });
-      return;
-    }
-    if (row.expiresAt && new Date(row.expiresAt) < new Date()) {
-      res.status(410).json({ error: "This check-in link has expired. Please request a new one." });
-      return;
-    }
-    if (row.status === "approved") {
-      res.status(409).json({ error: "This check-in link has already been used and approved." });
-      return;
-    }
+  const [record] = await db
+    .select({ id: checkinTokens.id, token: checkinTokens.token, status: checkinTokens.status, expiresAt: checkinTokens.expiresAt, propertyId: checkinTokens.propertyId, bedId: checkinTokens.bedId, propertyName: properties.name, propertyType: properties.type, propertyCity: properties.city, propertyState: properties.state })
+    .from(checkinTokens)
+    .leftJoin(properties, eq(checkinTokens.propertyId, properties.id))
+    .where(eq(checkinTokens.token, token));
 
-    const [prop] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, row.propertyId));
-    if (!prop) {
-      res.status(404).json({ error: "Property not found." });
-      return;
-    }
-
-    let assignedBed: { bedId: number; bedLabel: string; roomNumber: string; monthlyRent: number | null } | undefined;
-    if (row.bedId) {
-      const [bed] = await db.select().from(bedsTable).where(eq(bedsTable.id, row.bedId));
-      if (bed) {
-        const [room] = await db.select().from(roomsTable).where(eq(roomsTable.id, bed.roomId));
-        assignedBed = {
-          bedId: bed.id,
-          bedLabel: bed.label,
-          roomNumber: room?.number ?? "?",
-          monthlyRent: bed.monthlyRent ? Number(bed.monthlyRent) : null,
-        };
-      }
-    }
-
-    // Get available beds for self-selection (if no bed pre-assigned)
-    let availableBeds: any[] = [];
-    if (!row.bedId) {
-      availableBeds = await db
-        .select({
-          id: bedsTable.id,
-          label: bedsTable.label,
-          monthlyRent: bedsTable.monthlyRent,
-          roomNumber: roomsTable.number,
-          roomId: roomsTable.id,
-          floorName: floorsTable.name,
-          buildingName: buildingsTable.name,
-        })
-        .from(bedsTable)
-        .innerJoin(roomsTable, eq(bedsTable.roomId, roomsTable.id))
-        .innerJoin(floorsTable, eq(roomsTable.floorId, floorsTable.id))
-        .innerJoin(buildingsTable, eq(floorsTable.buildingId, buildingsTable.id))
-        .where(
-          and(
-            eq(buildingsTable.propertyId, row.propertyId),
-            eq(bedsTable.status, "available")
-          )
-        )
-        .orderBy(buildingsTable.name, floorsTable.number, roomsTable.number, bedsTable.label);
-
-      availableBeds = availableBeds.map((b) => ({
-        ...b,
-        monthlyRent: b.monthlyRent ? Number(b.monthlyRent) : null,
-      }));
-    }
-
-    res.json({
-      name: prop.name,
-      address: prop.address,
-      city: prop.city,
-      state: prop.state,
-      phone: prop.phone ?? null,
-      type: prop.type,
-      propertyId: prop.id,
-      assignedBed,
-      availableBeds,
-    });
-  } catch (err) {
-    req.log.error(err, "Failed to fetch checkin info");
-    res.status(500).json({ error: "Internal server error" });
-  }
+  if (!record) return res.status(404).json({ error: 'Token not found' });
+  if (new Date(record.expiresAt!) < new Date()) return res.status(410).json({ error: 'Token expired' });
+  if (record.status === 'approved' || record.status === 'rejected') return res.status(409).json({ error: `Token already ${record.status}` });
+  res.json(record);
 });
 
-// Public: submit guest registration
-router.post("/checkin/:token/submit", async (req, res) => {
+// POST /checkin/:token/submit — public
+router.post('/checkin/:token/submit', async (req, res) => {
   const { token } = req.params;
-  try {
-    const [row] = await db.select().from(checkinTokensTable).where(eq(checkinTokensTable.token, token));
-    if (!row) {
-      res.status(404).json({ error: "Invalid check-in link." });
-      return;
-    }
-    if (row.expiresAt && new Date(row.expiresAt) < new Date()) {
-      res.status(410).json({ error: "This check-in link has expired." });
-      return;
-    }
-    if (row.status === "approved") {
-      res.status(409).json({ error: "This link has already been approved." });
-      return;
-    }
+  const [record] = await db.select().from(checkinTokens).where(eq(checkinTokens.token, token));
+  if (!record) return res.status(404).json({ error: 'Token not found' });
+  if (new Date(record.expiresAt!) < new Date()) return res.status(410).json({ error: 'Token expired' });
+  if (record.status !== 'pending') return res.status(409).json({ error: 'Token already used' });
 
-    await db.update(checkinTokensTable)
-      .set({ status: "submitted", submittedData: req.body })
-      .where(eq(checkinTokensTable.id, row.id));
-
-    res.json({ success: true, message: "Registration submitted. Awaiting approval." });
-  } catch (err) {
-    req.log.error(err, "Failed to submit checkin");
-    res.status(500).json({ error: "Internal server error" });
-  }
+  await db.update(checkinTokens).set({ status: 'submitted', submittedData: req.body }).where(eq(checkinTokens.token, token));
+  res.json({ ok: true, message: 'Registration submitted! The operator will review and confirm your check-in.' });
 });
 
 export default router;

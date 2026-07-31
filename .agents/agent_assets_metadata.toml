@@ -1,8 +1,0 @@
-uploads = []
-generated = []
-
-[[outputs]]
-id = "OKoJUjl0txQWHDPtcERVt"
-uri = "file://DOCUMENTATION.md"
-type = "text"
-title = "NestPro — Complete Documentation"

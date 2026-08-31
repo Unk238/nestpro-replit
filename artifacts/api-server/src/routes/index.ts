@@ -11,11 +11,13 @@ import staffRouter from './staff';
 import dashboardRouter from './dashboard';
 import activityRouter from './activity';
 import checkinRouter from './checkin';
+import bookingsRouter from './bookings';
+import utilitiesRouter from './utilities';
 import aiRouter from './ai';
 
 const router = Router();
 
-router.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
+router.get('/healthz', (_req, res) => res.json({ status: 'ok', product: 'RENTAQ' }));
 
 router.use(propertiesRouter);
 router.use(buildingsRouter);
@@ -29,6 +31,8 @@ router.use(staffRouter);
 router.use(dashboardRouter);
 router.use(activityRouter);
 router.use(checkinRouter);
+router.use(bookingsRouter);
+router.use(utilitiesRouter);
 router.use(aiRouter);
 
 export default router;

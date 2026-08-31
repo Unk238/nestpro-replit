@@ -3,34 +3,30 @@ import { drizzle as drizzlePglite } from 'drizzle-orm/pglite';
 import { PGlite } from '@electric-sql/pglite';
 import { Pool } from 'pg';
 import path from 'path';
+import fs from 'fs';
 import * as schema from './schema/index';
 
 let dbInstance: any;
-let isPglite = false;
+let isPgliteMode = true;
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://nestpro:nestpro123@localhost:5432/nestpro';
-
-try {
-  const pool = new Pool({
-    connectionString,
-    connectionTimeoutMillis: 2000,
-  });
-  dbInstance = drizzlePg(pool, { schema });
-} catch (_e) {
-  isPglite = true;
-  const pglite = new PGlite(path.join(process.cwd(), '.nestpro_pglite'));
-  dbInstance = drizzlePglite(pglite, { schema });
+// Create data directory for persistent local database
+const dataDir = path.resolve(process.cwd(), '.rentaq_pglite');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
 }
+
+// In local mode, PGlite provides a persistent zero-configuration Postgres engine
+const pglite = new PGlite(dataDir);
+dbInstance = drizzlePglite(pglite, { schema });
 
 export const db = dbInstance;
 export * from './schema/index';
 
 export async function ensureTablesExist() {
   try {
-    // Create enums
     await db.execute(`
       DO $$ BEGIN
-        CREATE TYPE property_type AS ENUM ('pg', 'hostel', 'apartment', 'villa', 'co_living');
+        CREATE TYPE property_type AS ENUM ('pg', 'hostel', 'hotel', 'villa', 'apartment', 'kothi', 'shop', 'office', 'library', 'co_living', 'other');
       EXCEPTION WHEN duplicate_object THEN null; END $$;
 
       DO $$ BEGIN
@@ -66,11 +62,27 @@ export async function ensureTablesExist() {
       EXCEPTION WHEN duplicate_object THEN null; END $$;
 
       DO $$ BEGIN
-        CREATE TYPE staff_role AS ENUM ('owner', 'manager', 'operator');
+        CREATE TYPE staff_role AS ENUM ('owner', 'manager', 'landlord', 'operations_manager', 'receptionist', 'staff', 'broker', 'admin');
       EXCEPTION WHEN duplicate_object THEN null; END $$;
 
       DO $$ BEGIN
         CREATE TYPE checkin_token_status AS ENUM ('pending', 'submitted', 'approved', 'rejected');
+      EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE booking_source AS ENUM ('direct', 'booking_com', 'airbnb', 'agoda', 'makemytrip', 'expedia', 'yatra', 'phone', 'other');
+      EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE booking_status AS ENUM ('confirmed', 'in_review', 'checked_in', 'extended', 'checked_out', 'cancelled');
+      EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE utility_type AS ENUM ('electricity', 'water', 'internet', 'generator', 'gas', 'other');
+      EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE split_method AS ENUM ('equal', 'per_room', 'per_bed', 'by_days', 'custom');
       EXCEPTION WHEN duplicate_object THEN null; END $$;
 
       CREATE TABLE IF NOT EXISTS properties (
@@ -79,8 +91,17 @@ export async function ensureTablesExist() {
         address TEXT,
         city TEXT,
         state TEXT,
+        pincode TEXT,
         type property_type NOT NULL DEFAULT 'pg',
         description TEXT,
+        amenities TEXT,
+        rules TEXT,
+        wifi_ssid TEXT,
+        wifi_password TEXT,
+        upi_id TEXT,
+        contact_phone TEXT,
+        contact_email TEXT,
+        website_slug TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
 
@@ -170,10 +191,12 @@ export async function ensureTablesExist() {
 
       CREATE TABLE IF NOT EXISTS staff (
         id SERIAL PRIMARY KEY,
+        property_id INTEGER REFERENCES properties(id),
         name TEXT NOT NULL,
         phone TEXT,
         email TEXT,
-        role staff_role NOT NULL DEFAULT 'operator',
+        role staff_role NOT NULL DEFAULT 'staff',
+        permissions TEXT,
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
@@ -200,8 +223,58 @@ export async function ensureTablesExist() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         expires_at TIMESTAMPTZ NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS bookings (
+        id SERIAL PRIMARY KEY,
+        property_id INTEGER NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+        room_id INTEGER REFERENCES rooms(id),
+        guest_id INTEGER REFERENCES guests(id),
+        guest_name TEXT NOT NULL,
+        guest_phone TEXT,
+        guest_email TEXT,
+        source booking_source NOT NULL DEFAULT 'direct',
+        external_booking_id TEXT,
+        check_in_date DATE NOT NULL,
+        check_out_date DATE NOT NULL,
+        status booking_status NOT NULL DEFAULT 'confirmed',
+        gross_amount NUMERIC(10, 2) NOT NULL,
+        platform_fee NUMERIC(10, 2) DEFAULT 0,
+        net_receivable NUMERIC(10, 2) NOT NULL,
+        amount_received NUMERIC(10, 2) DEFAULT 0,
+        settlement_status TEXT DEFAULT 'pending',
+        is_extension TEXT DEFAULT 'no',
+        original_booking_id INTEGER,
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS utility_meters (
+        id SERIAL PRIMARY KEY,
+        property_id INTEGER NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+        meter_number TEXT NOT NULL,
+        label TEXT NOT NULL,
+        type utility_type NOT NULL DEFAULT 'electricity',
+        unit_rate NUMERIC(10, 2) DEFAULT 9.50,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS utility_bills (
+        id SERIAL PRIMARY KEY,
+        meter_id INTEGER NOT NULL REFERENCES utility_meters(id) ON DELETE CASCADE,
+        property_id INTEGER NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
+        billing_month INTEGER NOT NULL,
+        billing_year INTEGER NOT NULL,
+        previous_reading NUMERIC(10, 2) NOT NULL,
+        current_reading NUMERIC(10, 2) NOT NULL,
+        units_consumed NUMERIC(10, 2) NOT NULL,
+        total_amount NUMERIC(10, 2) NOT NULL,
+        split_method split_method NOT NULL DEFAULT 'equal',
+        status TEXT DEFAULT 'calculated',
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
   } catch (e) {
-    // Best-effort schema init
+    // Best-effort DDL initialization
   }
 }

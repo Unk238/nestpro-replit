@@ -9,3 +9,5 @@ export * from './complaints';
 export * from './staff';
 export * from './activity-logs';
 export * from './checkin-tokens';
+export * from './bookings';
+export * from './utilities';

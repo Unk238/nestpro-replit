@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 export type LanguageCode = 'en' | 'hi' | 'kn' | 'te' | 'ta' | 'ml' | 'mr' | 'bn' | 'gu' | 'pa' | 'ur' | 'or' | 'as';
 
@@ -54,7 +54,7 @@ export const TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
   properties: {
     en: 'Properties', hi: 'प्रॉपर्टीज', kn: 'ಆಸ್ತಿಗಳು', te: 'ప్రాపర్టీలు',
     ta: 'பண்புகள்', ml: 'പ്രോപ്പർട്ടികൾ', mr: 'प्रॉपर्टीज', bn: 'সম্পত্তি',
-    gu: 'પ્રોપર્ટીઝ', pa: 'ਜਾਇਦਾਦਾਂ', ur: 'جائیدادیں', or: 'ପ୍ରପର୍ଟି', as: 'সম্পত্তি',
+    gu: 'પ્રોપર્ટીઝ', pa: 'ਜਾਇਦਾਦਾਂ', ur: 'ਜਾਇਦਾਦਾਂ', or: 'ପ୍ରପର୍ଟି', as: 'সম্পত্তি',
   },
   bookings: {
     en: 'Central Bookings', hi: 'बुकिंग्स इनबॉक्स', kn: 'ಬುಕಿಂಗ್‌ಗಳು', te: 'బుకింగ్‌లు',
@@ -110,7 +110,7 @@ export const TRANSLATIONS: Record<string, Record<LanguageCode, string>> = {
     pa: 'ਟੀਮ ਅਤੇ ਅਧਿਕਾਰ', ur: 'ٹیم اور اجازت نامے', or: 'ଟିମ୍ ଏବଂ ଅନୁମତି', as: 'দল আৰু অনুমতি',
   },
   settings: {
-    en: 'Settings', hi: 'सेटिंग्स', kn: 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು', te: 'సెట్టింగ్‌లు',
+    en: 'Settings', hi: 'सेटिंग्स', kn: 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು', te: 'సెಟ್ಟಿంగ్‌లు',
     ta: 'அமைப்புகள்', ml: 'ക്രമീകരണങ്ങൾ', mr: 'सेटिंग्ज', bn: 'সেটিংস',
     gu: 'સેટિંગ્સ', pa: 'ਸੈਟਿੰਗਾਂ', ur: 'ترتیبات', or: 'ସେଟିଙ୍ଗସ୍', as: 'ছেটিংছ',
   },

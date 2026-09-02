@@ -30,20 +30,20 @@ export default function PublicStorefrontPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060a14] text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#2F6FED]" />
       </div>
     );
   }
 
   if (error || !property) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060a14] text-white p-4 text-center">
-        <div>
-          <Building2 className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold">Property Storefront Not Found</h1>
-          <p className="text-sm text-slate-400 mt-2">The requested public property website is unavailable.</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC] text-[#172033] p-4 text-center">
+        <Card className="max-w-md p-8">
+          <Building2 className="h-12 w-12 text-[#98A2B3] mx-auto mb-3" />
+          <h1 className="text-xl font-bold text-[#172033]">Property Not Found</h1>
+          <p className="text-xs text-[#667085] mt-1.5">The requested public website is currently unavailable.</p>
+        </Card>
       </div>
     );
   }
@@ -66,41 +66,41 @@ export default function PublicStorefrontPage() {
   )}`;
 
   return (
-    <div className="min-h-screen bg-[#070b16] text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#F7F9FC] text-[#172033] font-sans">
       {/* Hero Header */}
-      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-30 px-6 py-4">
+      <header className="border-b border-[#E5EAF1] bg-white sticky top-0 z-30 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md">
-              <Building2 className="h-5 w-5 text-white" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2F6FED] text-white">
+              <Building2 className="h-5 w-5" />
             </div>
-            <span className="text-xl font-extrabold text-white">{property.name}</span>
+            <span className="text-lg font-black text-[#173B6C]">{property.name}</span>
           </div>
 
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 font-bold text-xs gap-1.5 shadow-md shadow-emerald-600/20">
-              <MessageSquare className="h-4 w-4" /> WhatsApp Us
+            <Button size="sm" className="bg-[#16845B] hover:bg-[#116947] text-white font-bold text-xs gap-1.5 shadow-xs">
+              <MessageSquare className="h-4 w-4" /> WhatsApp Inquiry
             </Button>
           </a>
         </div>
       </header>
 
       {/* Main Storefront Body */}
-      <main className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
         {/* Banner Section */}
-        <div className="rounded-3xl p-8 sm:p-12 bg-gradient-to-br from-indigo-950/60 via-slate-900 to-purple-950/40 border border-slate-700/80 shadow-2xl relative overflow-hidden">
+        <div className="rounded-2xl p-8 sm:p-12 bg-white border border-[#E5EAF1] shadow-[0_4px_20px_rgba(23,32,51,0.04)]">
           <div className="max-w-2xl space-y-4">
             <Badge variant="default" className="text-xs uppercase font-bold tracking-wider">
               Verified {property.type.toUpperCase()} Accommodation
             </Badge>
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-black text-[#172033] tracking-tight">
               Welcome to {property.name}
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-[#667085] leading-relaxed">
               {property.description || 'Premium living space equipped with modern amenities, 24x7 security, and exceptional hospitality.'}
             </p>
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-indigo-300 font-medium pt-2">
-              <MapPin className="h-4 w-4 text-red-400 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-[#2F6FED] font-semibold pt-1">
+              <MapPin className="h-4 w-4 text-[#D64545] flex-shrink-0" />
               <span>{[property.address, property.city, property.state, property.pincode].filter(Boolean).join(', ')}</span>
             </div>
           </div>
@@ -108,18 +108,17 @@ export default function PublicStorefrontPage() {
 
         {/* Content Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column: Amenities, Rooms & Rules */}
-          <div className="lg:col-span-8 space-y-8">
-            {/* Amenities Grid */}
-            <Card className="border-slate-800 bg-slate-900/80">
-              <CardHeader>
-                <CardTitle className="text-lg text-white">Included Amenities & Services</CardTitle>
+          {/* Left Column: Amenities & Rules */}
+          <div className="lg:col-span-8 space-y-6">
+            <Card>
+              <CardHeader className="border-b border-[#E5EAF1] pb-3">
+                <CardTitle className="text-sm text-[#172033]">Included Amenities & Services</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {amenitiesList.map((a: string) => (
-                    <div key={a} className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs font-semibold text-slate-200 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                    <div key={a} className="p-3 rounded-lg bg-[#F7F9FC] border border-[#E5EAF1] text-xs font-semibold text-[#172033] flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-[#16845B] flex-shrink-0" />
                       <span>{a}</span>
                     </div>
                   ))}
@@ -127,16 +126,15 @@ export default function PublicStorefrontPage() {
               </CardContent>
             </Card>
 
-            {/* House Rules */}
             {property.rules && (
-              <Card className="border-slate-800 bg-slate-900/80">
-                <CardHeader>
-                  <CardTitle className="text-lg text-white flex items-center gap-2">
-                    <ShieldCheck className="h-5 w-5 text-indigo-400" /> Property Rules & Stay Policies
+              <Card>
+                <CardHeader className="border-b border-[#E5EAF1] pb-3">
+                  <CardTitle className="text-sm text-[#172033] flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[#2F6FED]" /> Property Rules & Stay Policies
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs leading-relaxed text-slate-300 whitespace-pre-line">
+                <CardContent className="pt-4">
+                  <div className="p-4 rounded-lg bg-[#F7F9FC] border border-[#E5EAF1] text-xs leading-relaxed text-[#172033] whitespace-pre-line">
                     {property.rules}
                   </div>
                 </CardContent>
@@ -146,17 +144,17 @@ export default function PublicStorefrontPage() {
 
           {/* Right Column: Direct Booking / Inquiry Form */}
           <div className="lg:col-span-4">
-            <Card className="border-indigo-500/30 bg-slate-900/95 sticky top-24 shadow-2xl">
-              <CardHeader className="border-b border-slate-800 pb-4">
-                <CardTitle className="text-base text-white">Inquire / Book a Visit</CardTitle>
-                <p className="text-xs text-slate-400">Direct booking with zero commission</p>
+            <Card className="sticky top-24 shadow-sm">
+              <CardHeader className="border-b border-[#E5EAF1] pb-3">
+                <CardTitle className="text-sm text-[#172033]">Inquire / Book a Visit</CardTitle>
+                <p className="text-xs text-[#667085]">Direct booking with zero commission</p>
               </CardHeader>
-              <CardContent className="pt-6 space-y-4">
+              <CardContent className="pt-5 space-y-4">
                 {inquirySubmitted ? (
-                  <div className="p-6 text-center space-y-3 bg-emerald-950/30 border border-emerald-500/30 rounded-xl">
-                    <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
-                    <p className="text-sm font-bold text-white">Inquiry Received!</p>
-                    <p className="text-xs text-slate-300">We will call you shortly to confirm your room visit.</p>
+                  <div className="p-6 text-center space-y-2 bg-[#E8F5E9] border border-[#C8E6C9] rounded-xl">
+                    <CheckCircle2 className="h-8 w-8 text-[#16845B] mx-auto" />
+                    <p className="text-sm font-bold text-[#172033]">Inquiry Received!</p>
+                    <p className="text-xs text-[#667085]">We will call you shortly to confirm your room visit.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSendInquiry} className="space-y-4">
@@ -168,14 +166,14 @@ export default function PublicStorefrontPage() {
                       <Label>Your Phone Number *</Label>
                       <Input required value={inquiryPhone} onChange={(e) => setInquiryPhone(e.target.value)} placeholder="+91 98765 43210" />
                     </div>
-                    <Button type="submit" size="lg" className="w-full font-bold">
-                      <Send className="h-4 w-4 mr-1.5" /> Request Callback
+                    <Button type="submit" size="lg" className="btn-primary w-full font-bold text-xs py-2.5">
+                      <Send className="h-3.5 w-3.5 mr-1.5" /> Request Callback
                     </Button>
                   </form>
                 )}
 
-                <div className="pt-4 border-t border-slate-800 text-center">
-                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-400 hover:underline inline-flex items-center gap-1 font-semibold">
+                <div className="pt-4 border-t border-[#E5EAF1] text-center">
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[#16845B] hover:underline inline-flex items-center gap-1 font-semibold">
                     <MessageSquare className="h-3.5 w-3.5" /> Or chat directly on WhatsApp
                   </a>
                 </div>
@@ -186,8 +184,8 @@ export default function PublicStorefrontPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-8 text-center text-xs text-slate-400">
-        <p>Powered by <strong className="text-white">RENTAQ Business OS</strong> · Indian Property Platform</p>
+      <footer className="border-t border-[#E5EAF1] py-8 text-center text-xs text-[#667085]">
+        <p>Powered by <strong className="text-[#173B6C]">RENTAQ Property OS</strong></p>
       </footer>
     </div>
   );

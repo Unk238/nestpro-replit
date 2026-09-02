@@ -13,6 +13,7 @@
     "@workspace/db": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.32.0",
     "express": "^5.0.1",
     "pino": "^9.3.2",
     "pino-http": "^10.2.0",

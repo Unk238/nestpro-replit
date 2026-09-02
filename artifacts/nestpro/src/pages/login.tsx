@@ -1,168 +1,141 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { motion } from 'framer-motion';
-import { Home, Eye, EyeOff, Loader2, CheckCircle2, ShieldCheck, Zap, Sparkles } from 'lucide-react';
+import { Building2, ArrowRight, ShieldCheck, Lock, Mail } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LanguageSelector } from '@/components/language-selector';
+import { useTranslation } from '@/lib/i18n';
 import { toast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
-  const [email, setEmail] = useState('admin@nestpro.in');
+  const { t } = useTranslation();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      return toast({ title: 'Please enter your email and password', variant: 'destructive' });
+      toast({ title: 'Missing fields', description: 'Please enter your email and password.', variant: 'destructive' });
+      return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    localStorage.setItem('nestpro_user', JSON.stringify({ email }));
-    setLoading(false);
-    window.location.href = '/';
+    setTimeout(() => {
+      localStorage.setItem('rentaq_user', JSON.stringify({ email, name: email.split('@')[0], role: 'Owner' }));
+      localStorage.setItem('nestpro_user', JSON.stringify({ email }));
+      toast({ title: 'Welcome to RENTAQ', description: 'Signed in successfully.', variant: 'success' });
+      window.location.href = '/';
+    }, 400);
+  };
+
+  const fillDemo = (roleEmail: string) => {
+    setEmail(roleEmail);
+    setPassword('rentaq123');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#060a14] px-4 py-12">
-      {/* Background glowing gradients */}
-      <div className="absolute top-1/4 left-1/3 h-96 w-96 rounded-full bg-indigo-600/15 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 h-96 w-96 rounded-full bg-purple-600/12 blur-[120px] pointer-events-none" />
-
-      <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        {/* Left Column: Clear Value Proposition & Features */}
-        <motion.div
-          initial={{ opacity: 0, x: -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="lg:col-span-6 space-y-6 text-left"
-        >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-semibold">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            <span>Next-Gen PG & Hostel Operating System</span>
+    <div className="min-h-screen flex flex-col justify-between bg-[#F7F9FC] text-[#172033] p-4 sm:p-8">
+      {/* Top Header */}
+      <header className="max-w-4xl w-full mx-auto flex items-center justify-between py-2">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2F6FED] text-white">
+            <Building2 className="h-5 w-5" />
           </div>
-
-          <div className="space-y-3">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              Manage your properties with <span className="gradient-text">effortless clarity</span>.
-            </h1>
-            <p className="text-base text-slate-300 leading-relaxed font-normal">
-              Replace messy spreadsheets and WhatsApp threads with a single structured platform for Indian PG and hostel owners.
-            </p>
+          <div>
+            <span className="text-lg font-black text-[#173B6C] tracking-tight">RENTAQ</span>
+            <span className="block text-[10px] font-semibold text-[#667085] uppercase tracking-wider">Property OS</span>
           </div>
+        </div>
+        <LanguageSelector />
+      </header>
 
-          {/* Feature Highlights */}
-          <div className="space-y-3 pt-2">
-            {[
-              { title: 'Automated Rent & Overdue Tracking', desc: 'Instant 6-month revenue analytics and payment alerts.' },
-              { title: 'QR Guest Self Check-In Portal', desc: 'Zero-friction online onboarding for new guests.' },
-              { title: 'AI Receptionist Assistant', desc: 'Ask natural questions about rooms, guests & complaints.' },
-            ].map((f) => (
-              <div key={f.title} className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400 mt-0.5 flex-shrink-0">
-                  <CheckCircle2 className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-100">{f.title}</p>
-                  <p className="text-xs text-slate-400">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Right Column: Sign-In Card with High-Contrast UI & 16px Spacing */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="lg:col-span-6"
-        >
-          <div className="glass rounded-2xl p-6 sm:p-8 shadow-2xl border border-slate-700/80 bg-slate-900/90">
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/40">
-                <Home className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-100">Operator Sign In</h2>
-                <p className="text-xs text-slate-300 font-medium">Access your NestPro dashboard</p>
-              </div>
+      {/* Main Login Card */}
+      <main className="max-w-md w-full mx-auto my-8">
+        <Card className="border-[#E5EAF1] bg-white shadow-[0_4px_20px_rgba(23,32,51,0.06)] p-2">
+          <CardHeader className="space-y-1.5 text-center pb-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#EFF5FF] text-[#2F6FED] mx-auto mb-1">
+              <Building2 className="h-6 w-6" />
             </div>
+            <CardTitle className="text-xl font-bold text-[#172033]">Sign in to Workspace</CardTitle>
+            <CardDescription className="text-xs text-[#667085]">
+              Enter your credentials to access your properties & ledger
+            </CardDescription>
+          </CardHeader>
 
-            {/* Form with Fix #2: 16px Vertical Spacing & 12px Input Padding */}
-            <form onSubmit={handleLogin} className="space-y-4">
+          <CardContent className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="email">Work Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@nestpro.in"
-                  className="mt-1.5"
-                />
+                <Label>Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#98A2B3]" />
+                  <Input
+                    type="email"
+                    className="pl-10"
+                    placeholder="admin@rentaq.in"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <Label htmlFor="password">Password</Label>
-                  <span className="text-xs text-indigo-400 hover:underline cursor-pointer">Forgot password?</span>
+                  <Label className="mb-0">Password</Label>
+                  <a href="#" className="text-xs font-semibold text-[#2F6FED] hover:underline">Forgot?</a>
                 </div>
                 <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#98A2B3]" />
                   <Input
-                    id="password"
-                    type={show ? 'text' : 'password'}
-                    required
+                    type="password"
+                    className="pl-10"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="pr-10"
+                    required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShow(!show)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-100 transition-colors p-1"
-                    aria-label={show ? 'Hide password' : 'Show password'}
-                  >
-                    {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
                 </div>
               </div>
 
-              {/* High-Converting Primary CTA Button */}
-              <Button type="submit" size="lg" className="w-full mt-2 text-base font-bold shadow-xl shadow-indigo-500/30" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Authenticating...
-                  </>
-                ) : (
-                  <>
-                    Sign In to Dashboard
-                    <Zap className="h-4 w-4 ml-1 fill-current" />
-                  </>
-                )}
+              <Button type="submit" disabled={loading} className="btn-primary w-full text-xs font-bold py-2.5 shadow-sm">
+                {loading ? 'Authenticating...' : 'Sign In to Workspace'}
+                <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             </form>
 
-            {/* Demo Notice */}
-            <div className="mt-6 pt-5 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-slate-400 flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                Demo Credentials:
-              </span>
-              <span className="font-mono text-indigo-300 bg-indigo-950/60 border border-indigo-500/30 px-2 py-0.5 rounded">
-                admin@nestpro.in / pass
-              </span>
+            {/* Quick Demo Credentials */}
+            <div className="pt-4 border-t border-[#E5EAF1] space-y-2">
+              <p className="text-[11px] font-semibold text-[#667085] text-center">Demo Quick-Access Profiles:</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => fillDemo('admin@rentaq.in')}
+                  className="p-2 rounded-lg bg-[#F7F9FC] border border-[#E5EAF1] text-left hover:border-[#2F6FED] hover:bg-[#EFF5FF] transition-colors"
+                >
+                  <p className="font-bold text-[#172033]">Owner Admin</p>
+                  <p className="text-[10px] text-[#667085]">admin@rentaq.in</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemo('manager@rentaq.in')}
+                  className="p-2 rounded-lg bg-[#F7F9FC] border border-[#E5EAF1] text-left hover:border-[#2F6FED] hover:bg-[#EFF5FF] transition-colors"
+                >
+                  <p className="font-bold text-[#172033]">Property Manager</p>
+                  <p className="text-[10px] text-[#667085]">manager@rentaq.in</p>
+                </button>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      {/* Footer */}
+      <footer className="max-w-4xl w-full mx-auto text-center py-2 text-xs text-[#667085]">
+        <p>RENTAQ · Production Property Operations OS · All data encrypted</p>
+      </footer>
     </div>
   );
 }

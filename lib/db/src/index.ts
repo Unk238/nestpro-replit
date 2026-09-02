@@ -5,6 +5,7 @@ import * as schema from './schema/index';
 export const pglite = new PGlite();
 export const db = drizzle(pglite, { schema });
 export * from './schema/index';
+export { eq, and, desc, asc, sql, count, or, inArray, isNull, isNotNull } from 'drizzle-orm';
 
 export async function ensureTablesExist() {
   await pglite.waitReady;

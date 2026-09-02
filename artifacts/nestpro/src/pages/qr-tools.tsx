@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QrCode, Download, Copy, Printer, MessageSquare, Wifi, MapPin, IndianRupee, UserCheck, ShieldCheck } from 'lucide-react';
+import { QrCode, Copy, Printer, MessageSquare, Wifi, MapPin, IndianRupee, UserCheck, ShieldCheck } from 'lucide-react';
 import { Layout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,6 @@ export default function QRToolsPage() {
   const { activeProperty } = usePropertyContext();
   const [type, setType] = useState('upi');
 
-  // Input states
   const [upiId, setUpiId] = useState(activeProperty?.upiId || 'rentaq@okaxis');
   const [upiAmount, setUpiAmount] = useState('');
   const [whatsappPhone, setWhatsappPhone] = useState(activeProperty?.contactPhone || '919876543210');
@@ -23,7 +22,6 @@ export default function QRToolsPage() {
   const [locationUrl, setLocationUrl] = useState('https://maps.google.com/?q=' + encodeURIComponent(activeProperty?.name || 'Property'));
   const [checkinUrl, setCheckinUrl] = useState(`${window.location.origin}/checkin/demo-token`);
 
-  // Compute QR Data Payload
   let qrPayload = '';
   if (type === 'upi') {
     qrPayload = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(activeProperty?.name || 'Rent')}${upiAmount ? '&am=' + upiAmount : ''}&cu=INR`;
@@ -47,23 +45,23 @@ export default function QRToolsPage() {
   return (
     <Layout title="QR Code Generator Suite">
       <div>
-        <h2 className="text-base font-bold text-white">Generate Instant Business QR Codes</h2>
-        <p className="text-xs text-slate-300">Generate printable and shareable QR codes for payments, WhatsApp, Wi-Fi, and check-in links.</p>
+        <h2 className="text-sm font-bold text-[#172033]">Generate Instant Business QR Codes</h2>
+        <p className="text-xs text-[#667085]">Generate printable and shareable QR codes for payments, WhatsApp, Wi-Fi, and check-in links.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Controls Card */}
-        <Card className="lg:col-span-7 border-slate-800 bg-slate-900/90">
-          <CardHeader>
-            <CardTitle className="text-base text-white">QR Code Configuration</CardTitle>
-            <CardDescription className="text-slate-300">Select the type of QR code you want to generate</CardDescription>
+        <Card className="lg:col-span-7">
+          <CardHeader className="border-b border-[#E5EAF1] pb-3">
+            <CardTitle className="text-sm text-[#172033]">QR Code Configuration</CardTitle>
+            <CardDescription className="text-xs text-[#667085]">Select the type of QR code you want to generate</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-4 pt-4">
             <div>
               <Label>QR Code Purpose</Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="bg-slate-900 border-slate-700 mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white border-[#E5EAF1]">
                   <SelectItem value="upi">UPI / Rent Payment QR</SelectItem>
                   <SelectItem value="whatsapp">WhatsApp Direct Chat QR</SelectItem>
                   <SelectItem value="wifi">Wi-Fi Instant Connect QR</SelectItem>
@@ -74,7 +72,7 @@ export default function QRToolsPage() {
             </div>
 
             {type === 'upi' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
                   <Label>UPI VPA ID *</Label>
                   <Input value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="name@upi" />
@@ -87,9 +85,9 @@ export default function QRToolsPage() {
             )}
 
             {type === 'whatsapp' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <Label>WhatsApp Phone Number (with country code) *</Label>
+                  <Label>WhatsApp Phone Number *</Label>
                   <Input value={whatsappPhone} onChange={(e) => setWhatsappPhone(e.target.value)} placeholder="919876543210" />
                 </div>
                 <div>
@@ -100,7 +98,7 @@ export default function QRToolsPage() {
             )}
 
             {type === 'wifi' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label>Wi-Fi Network Name (SSID)</Label>
                   <Input value={wifiSsid} onChange={(e) => setWifiSsid(e.target.value)} />
@@ -129,31 +127,31 @@ export default function QRToolsPage() {
         </Card>
 
         {/* QR Preview Card */}
-        <Card className="lg:col-span-5 border-slate-800 bg-slate-900/90 text-center flex flex-col justify-between">
-          <CardHeader>
-            <CardTitle className="text-base text-white">Live QR Code Preview</CardTitle>
-            <CardDescription className="text-slate-300">Scan with any mobile camera</CardDescription>
+        <Card className="lg:col-span-5 text-center flex flex-col justify-between">
+          <CardHeader className="border-b border-[#E5EAF1] pb-3">
+            <CardTitle className="text-sm text-[#172033]">Live QR Code Preview</CardTitle>
+            <CardDescription className="text-xs text-[#667085]">Scan with any phone camera or UPI app</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 py-4">
-            <div className="p-4 bg-white rounded-2xl w-fit mx-auto shadow-2xl border-4 border-slate-700">
-              <img src={qrImageUrl} alt="Generated QR" className="h-52 w-52" />
+          <CardContent className="space-y-4 py-6">
+            <div className="p-3 bg-white rounded-xl w-fit mx-auto border-2 border-[#172033] shadow-xs">
+              <img src={qrImageUrl} alt="Generated QR" className="h-44 w-44" />
             </div>
 
-            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 text-[11px] font-mono text-slate-300 break-all">
+            <div className="p-2.5 rounded-lg bg-[#F7F9FC] border border-[#E5EAF1] text-[11px] font-mono text-[#667085] break-all">
               {qrPayload}
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={copyPayload} className="flex-1 text-xs">
+              <Button variant="outline" size="sm" onClick={copyPayload} className="flex-1 text-xs font-semibold">
                 <Copy className="h-3.5 w-3.5 mr-1" /> Copy Link
               </Button>
               <Button
                 size="sm"
                 onClick={() => {
                   const w = window.open('');
-                  w?.document.write(`<html><body style="text-align:center;padding:40px;font-family:sans-serif;"><h1>${activeProperty?.name || 'RENTAQ'}</h1><img src="${qrImageUrl}" style="width:300px;height:300px;border:4px solid #000;border-radius:16px;"/><p style="font-size:18px;margin-top:20px;font-weight:bold;">Scan to proceed</p><script>window.print();</script></body></html>`);
+                  w?.document.write(`<html><body style="text-align:center;padding:40px;font-family:sans-serif;"><h2>${activeProperty?.name || 'RENTAQ'}</h2><img src="${qrImageUrl}" style="width:260px;height:260px;border:2px solid #000;border-radius:12px;"/><p style="font-size:16px;margin-top:16px;font-weight:bold;">Scan to proceed</p><script>window.print();</script></body></html>`);
                 }}
-                className="flex-1 text-xs font-bold"
+                className="btn-primary flex-1 text-xs font-bold"
               >
                 <Printer className="h-3.5 w-3.5 mr-1" /> Print QR
               </Button>

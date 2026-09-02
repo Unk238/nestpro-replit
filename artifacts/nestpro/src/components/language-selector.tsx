@@ -1,38 +1,40 @@
 import React from 'react';
-import { Globe } from 'lucide-react';
+import { Globe, ChevronDown } from 'lucide-react';
 import { useTranslation, SUPPORTED_LANGUAGES, LanguageCode } from '@/lib/i18n';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from './ui/dropdown-menu';
 
-export function LanguageSelector({ className }: { className?: string }) {
+export function LanguageSelector() {
   const { language, setLanguage } = useTranslation();
-  const currentLang = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
+  const current = SUPPORTED_LANGUAGES.find((l) => l.code === language) || SUPPORTED_LANGUAGES[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/90 text-xs font-semibold text-slate-200 hover:border-indigo-400 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 ${className || ''}`}
+          className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-white border border-[#E5EAF1] hover:border-[#CBD5E1] hover:bg-[#F7F9FC] text-[#173B6C] transition-colors shadow-2xs focus-ring"
+          title="Select Language"
         >
-          <Globe className="h-3.5 w-3.5 text-indigo-400" />
-          <span>{currentLang.nativeName}</span>
+          <Globe className="h-3.5 w-3.5 text-[#2F6FED]" />
+          <span>{current.nativeName}</span>
+          <ChevronDown className="h-3 w-3 text-[#667085]" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-slate-900 border-slate-700 max-h-64 overflow-y-auto">
-        {SUPPORTED_LANGUAGES.map((l) => (
+      <DropdownMenuContent className="w-48 bg-white border-[#E5EAF1] text-[#172033] shadow-lg max-h-72 overflow-y-auto">
+        {SUPPORTED_LANGUAGES.map((lang) => (
           <DropdownMenuItem
-            key={l.code}
-            onClick={() => setLanguage(l.code)}
-            className={`cursor-pointer flex items-center justify-between text-xs py-2 ${
-              language === l.code ? 'bg-indigo-600/30 text-indigo-300 font-bold' : 'text-slate-200 hover:bg-slate-800'
+            key={lang.code}
+            onClick={() => setLanguage(lang.code as LanguageCode)}
+            className={`cursor-pointer text-xs py-1.5 ${
+              language === lang.code ? 'bg-[#EFF5FF] text-[#2F6FED] font-bold' : 'text-[#172033] hover:bg-[#F7F9FC]'
             }`}
           >
-            <span>{l.nativeName}</span>
-            <span className="text-[10px] text-slate-400">{l.name}</span>
+            <span className="font-medium">{lang.nativeName}</span>
+            <span className="ml-auto text-[10px] text-[#667085]">({lang.name})</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

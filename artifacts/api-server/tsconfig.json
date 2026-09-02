@@ -4,11 +4,12 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "outDir": "dist",
-    "rootDir": "src",
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
       "@workspace/db": ["../../lib/db/src/index.ts"],
       "@workspace/db/*": ["../../lib/db/src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../../lib/db/src"]
 }

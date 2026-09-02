@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 15%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 15%;
-    --muted-foreground: 215 20% 72%; /* High contrast text (slate-300 level) for readability */
-    --accent: 217 33% 18%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 72% 51%;
+    --background: 216 33% 98%;      /* #F7F9FC */
+    --foreground: 221 38% 15%;      /* #172033 */
+    --card: 0 0% 100%;              /* #FFFFFF */
+    --card-foreground: 221 38% 15%; /* #172033 */
+    --primary: 220 84% 55%;         /* #2F6FED */
+    --primary-foreground: 0 0% 100%;/* #FFFFFF */
+    --secondary: 216 30% 96%;       /* #F0F4FA */
+    --secondary-foreground: 221 38% 15%;
+    --muted: 216 30% 96%;           /* #F0F4FA */
+    --muted-foreground: 218 14% 46%;/* #667085 */
+    --accent: 216 30% 96%;
+    --accent-foreground: 221 38% 15%;
+    --destructive: 0 65% 55%;       /* #D64545 */
     --destructive-foreground: 0 0% 100%;
-    --border: 217 33% 24%;
-    --input: 217 33% 22%;
-    --ring: 239 84% 67%;
-    --radius: 0.75rem;
+    --border: 214 30% 92%;          /* #E5EAF1 */
+    --input: 214 30% 92%;           /* #E5EAF1 */
+    --ring: 220 84% 55%;            /* #2F6FED */
+    --radius: 0.5rem;               /* 8px moderate radius */
   }
 }
 
@@ -29,74 +29,64 @@
   * {
     @apply border-border box-border;
   }
-  html {
-    @apply h-full;
-  }
-  body {
-    @apply bg-background text-foreground font-sans antialiased h-full;
-    background-color: #080d1a;
+  html, body {
+    @apply h-full bg-[#F7F9FC] text-[#172033] font-sans antialiased;
+    background-color: #F7F9FC;
+    color: #172033;
   }
   #root {
     @apply h-full;
   }
 }
 
-/* Custom High Contrast Scrollbar */
+/* Operational clean scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0b1120; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-track { background: #F7F9FC; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
-/* Enhanced Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #e879f9 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Glass Card with enhanced border contrast */
-.glass {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(129, 140, 248, 0.25);
+/* Clean UI Elevation & Surface Shadows */
+.surface-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5EAF1;
+  box-shadow: 0 1px 3px rgba(23, 32, 51, 0.03), 0 1px 2px rgba(23, 32, 51, 0.02);
 }
 
-/* High Conversion Card Glow */
-.card-glow {
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 4px 20px rgba(15, 23, 42, 0.6);
-  transition: all 0.2s ease-in-out;
-}
-.card-glow:hover {
-  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.35), 0 8px 30px rgba(99, 102, 241, 0.15);
+.surface-elevated {
+  background-color: #FFFFFF;
+  border: 1px solid #E5EAF1;
+  box-shadow: 0 4px 12px rgba(23, 32, 51, 0.05), 0 1px 3px rgba(23, 32, 51, 0.03);
 }
 
-/* Ultra Distinct Primary CTA Button */
-.btn-primary-cta {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.38);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* Primary Action Button */
+.btn-primary {
+  background-color: #2F6FED;
+  color: #FFFFFF;
+  font-weight: 600;
+  transition: all 0.15s ease-in-out;
 }
-.btn-primary-cta:hover {
-  box-shadow: 0 6px 20px 0 rgba(168, 85, 247, 0.5);
-  transform: translateY(-1.5px);
-  filter: brightness(1.08);
+.btn-primary:hover {
+  background-color: #245BC2;
 }
-.btn-primary-cta:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px 0 rgba(99, 102, 241, 0.3);
-}
-
-/* High Contrast Input Fields with explicit focus rings */
-.input-high-contrast {
-  @apply h-11 px-4 py-3 bg-secondary/80 border-slate-700 text-slate-100 placeholder:text-slate-400 rounded-lg text-sm transition-all duration-150;
-}
-.input-high-contrast:focus {
-  @apply border-indigo-400 ring-2 ring-indigo-500/40 outline-none bg-slate-900;
+.btn-primary:active {
+  background-color: #1D4AA3;
+  transform: translateY(0.5px);
 }
 
-/* Accessibility Focus Ring Utility */
+/* Secondary Button */
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: #173B6C;
+  border: 1px solid #E5EAF1;
+  font-weight: 600;
+  transition: all 0.15s ease-in-out;
+}
+.btn-secondary:hover {
+  background-color: #F7F9FC;
+  border-color: #CBD5E1;
+}
+
+/* Focus Ring */
 .focus-ring {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F6FED] focus-visible:ring-offset-1 focus-visible:ring-offset-white;
 }

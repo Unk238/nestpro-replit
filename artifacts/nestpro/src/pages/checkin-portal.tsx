@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useRoute } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Home, CheckCircle2, AlertCircle, Loader2, ShieldCheck, UserCheck } from 'lucide-react';
+import {
+  Building2, CheckCircle2, ShieldCheck, UserCheck,
+  Upload, Phone, Mail, MapPin, Loader2, ArrowRight
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { LanguageSelector } from '@/components/language-selector';
 import { api } from '@/lib/api';
-import { motion } from 'framer-motion';
+import { toast } from '@/hooks/use-toast';
 
 export default function CheckinPortalPage() {
   const [, params] = useRoute('/checkin/:token');
@@ -20,17 +24,15 @@ export default function CheckinPortalPage() {
     phone: '',
     email: '',
     aadhaar: '',
-    occupation: '',
-    hometown: '',
     emergencyContact: '',
     emergencyPhone: '',
-    checkInDate: new Date().toISOString().split('T')[0],
+    occupation: '',
+    hometown: '',
+    vehicleNumber: '',
     notes: '',
   });
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  const { data: tokenData, isLoading, error } = useQuery({
+  const { data: tokenInfo, isLoading, error } = useQuery({
     queryKey: ['checkin-token', token],
     queryFn: () => api.getCheckinToken(token),
     retry: false,
@@ -38,163 +40,177 @@ export default function CheckinPortalPage() {
 
   const submitMutation = useMutation({
     mutationFn: (data: any) => api.submitCheckin(token, data),
-    onSuccess: () => setSubmitted(true),
+    onSuccess: () => {
+      setSubmitted(true);
+      toast({ title: 'Check-in details submitted!', variant: 'success' });
+    },
   });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.phone) {
+      toast({ title: 'Required fields missing', description: 'Please fill name and mobile number.', variant: 'destructive' });
+      return;
+    }
+    submitMutation.mutate(form);
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060a14] text-slate-100">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F9FC]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#2F6FED]" />
       </div>
     );
   }
 
-  if (error || !tokenData) {
+  if (error || !tokenInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060a14] p-4">
-        <Card className="max-w-md w-full border-red-500/30 bg-slate-900 shadow-2xl">
-          <CardContent className="p-8 text-center space-y-4">
-            <div className="h-16 w-16 bg-red-500/20 text-red-400 rounded-2xl flex items-center justify-center mx-auto border border-red-500/30">
-              <AlertCircle className="h-8 w-8" />
-            </div>
-            <h2 className="text-xl font-extrabold text-slate-100">Link Invalid or Expired</h2>
-            <p className="text-sm text-slate-300 leading-relaxed font-normal">
-              {(error as any)?.message || 'This check-in link is no longer active. Please contact your property operator to get a new registration link.'}
-            </p>
-          </CardContent>
+      <div className="min-h-screen flex flex-col justify-center items-center bg-[#F7F9FC] p-4 text-center">
+        <Card className="max-w-md w-full p-6">
+          <ShieldCheck className="h-12 w-12 text-[#98A2B3] mx-auto mb-3" />
+          <h2 className="text-lg font-bold text-[#172033]">Link Expired or Invalid</h2>
+          <p className="text-xs text-[#667085] mt-1.5">
+            This digital check-in invitation is invalid or has already been used. Please contact the property manager for a new link.
+          </p>
         </Card>
-      </div>
-    );
-  }
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060a14] p-4">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full">
-          <Card className="border-emerald-500/30 bg-slate-900 shadow-2xl text-center">
-            <CardContent className="p-8 space-y-4">
-              <div className="h-16 w-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/30 shadow-lg shadow-emerald-500/20">
-                <CheckCircle2 className="h-8 w-8" />
-              </div>
-              <h2 className="text-2xl font-extrabold text-slate-100">Registration Submitted!</h2>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Thank you for submitting your check-in details for <strong className="text-white">{tokenData.propertyName}</strong>. The property manager will review and confirm your registration.
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#060a14] py-12 px-4 flex justify-center">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl space-y-6">
-        {/* Header Branding */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 shadow-xl shadow-indigo-500/30 mb-2">
-            <Home className="h-7 w-7 text-white" />
+    <div className="min-h-screen flex flex-col justify-between bg-[#F7F9FC] text-[#172033] p-4 sm:p-8 font-sans">
+      {/* Header */}
+      <header className="max-w-2xl w-full mx-auto flex items-center justify-between py-2 border-b border-[#E5EAF1] pb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2F6FED] text-white">
+            <Building2 className="h-5 w-5" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">{tokenData.propertyName}</h1>
-          <p className="text-sm font-semibold text-indigo-300 inline-flex items-center gap-1.5 bg-indigo-950/60 border border-indigo-500/30 px-3 py-1 rounded-full">
-            <UserCheck className="h-4 w-4" /> Guest Self Check-In Registration
-          </p>
+          <div>
+            <span className="text-base font-bold text-[#173B6C]">{tokenInfo.propertyName || 'Property'}</span>
+            <span className="block text-[10px] text-[#667085] uppercase tracking-wider">Digital Self Check-In</span>
+          </div>
         </div>
+        <LanguageSelector />
+      </header>
 
-        {/* Portal Form Card */}
-        <Card className="shadow-2xl border-slate-700 bg-slate-900/95">
-          <CardHeader className="border-b border-slate-800 pb-4">
-            <CardTitle className="text-lg font-bold text-slate-100">Guest Information Form</CardTitle>
-            <CardDescription className="text-slate-300">
-              Please fill out your accurate details for accommodation records and identity verification.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitMutation.mutate(form);
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <Label>Full Name *</Label>
-                <Input required value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Rahul Sharma" />
+      {/* Main Container */}
+      <main className="max-w-2xl w-full mx-auto my-6">
+        <Card className="shadow-[0_4px_20px_rgba(23,32,51,0.04)]">
+          {submitted ? (
+            <CardContent className="p-8 sm:p-12 text-center space-y-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#E8F5E9] text-[#16845B] mx-auto">
+                <CheckCircle2 className="h-8 w-8" />
               </div>
+              <h2 className="text-xl font-bold text-[#172033]">Check-In Information Submitted!</h2>
+              <p className="text-xs text-[#667085] max-w-md mx-auto leading-relaxed">
+                Thank you, <strong>{form.name}</strong>. Your identification and stay details have been securely recorded with the property administration. Your room keys will be handed over upon arrival.
+              </p>
+            </CardContent>
+          ) : (
+            <>
+              <CardHeader className="border-b border-[#E5EAF1] pb-4">
+                <CardTitle className="text-base font-bold text-[#172033]">Guest Registration & KYC</CardTitle>
+                <CardDescription className="text-xs text-[#667085]">
+                  Please provide your personal details and emergency contact for government compliance and room allotment.
+                </CardDescription>
+              </CardHeader>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Phone Number *</Label>
-                  <Input required value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+91 98765 43210" />
-                </div>
-                <div>
-                  <Label>Email Address</Label>
-                  <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="rahul@example.com" />
-                </div>
-              </div>
+              <CardContent className="p-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Full Name (as per ID) *</Label>
+                      <Input
+                        required
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        placeholder="Rohan Mehra"
+                      />
+                    </div>
+                    <div>
+                      <Label>Mobile Number (WhatsApp) *</Label>
+                      <Input
+                        required
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        placeholder="+91 98765 43210"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Aadhaar Card Number</Label>
-                  <Input value={form.aadhaar} onChange={(e) => set('aadhaar', e.target.value)} placeholder="1234 5678 9012" />
-                </div>
-                <div>
-                  <Label>Occupation / Company</Label>
-                  <Input value={form.occupation} onChange={(e) => set('occupation', e.target.value)} placeholder="Software Engineer / Student" />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Email Address</Label>
+                      <Input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        placeholder="rohan@example.com"
+                      />
+                    </div>
+                    <div>
+                      <Label>Aadhaar / ID Card Number</Label>
+                      <Input
+                        value={form.aadhaar}
+                        onChange={(e) => setForm({ ...form, aadhaar: e.target.value })}
+                        placeholder="XXXX XXXX XXXX"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Hometown / Permanent Address</Label>
-                  <Input value={form.hometown} onChange={(e) => set('hometown', e.target.value)} placeholder="Jaipur, Rajasthan" />
-                </div>
-                <div>
-                  <Label>Expected Check-In Date</Label>
-                  <Input type="date" value={form.checkInDate} onChange={(e) => set('checkInDate', e.target.value)} />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Occupation / Company / College</Label>
+                      <Input
+                        value={form.occupation}
+                        onChange={(e) => setForm({ ...form, occupation: e.target.value })}
+                        placeholder="Software Engineer / Student"
+                      />
+                    </div>
+                    <div>
+                      <Label>Permanent Hometown / City</Label>
+                      <Input
+                        value={form.hometown}
+                        onChange={(e) => setForm({ ...form, hometown: e.target.value })}
+                        placeholder="Pune, Maharashtra"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-800 pt-4">
-                <div>
-                  <Label>Emergency Contact Name</Label>
-                  <Input value={form.emergencyContact} onChange={(e) => set('emergencyContact', e.target.value)} placeholder="Father / Mother / Guardian" />
-                </div>
-                <div>
-                  <Label>Emergency Phone Number</Label>
-                  <Input value={form.emergencyPhone} onChange={(e) => set('emergencyPhone', e.target.value)} placeholder="+91 98765 00000" />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#E5EAF1]">
+                    <div>
+                      <Label>Emergency Contact Person</Label>
+                      <Input
+                        value={form.emergencyContact}
+                        onChange={(e) => setForm({ ...form, emergencyContact: e.target.value })}
+                        placeholder="Parent / Guardian Name"
+                      />
+                    </div>
+                    <div>
+                      <Label>Emergency Contact Phone *</Label>
+                      <Input
+                        value={form.emergencyPhone}
+                        onChange={(e) => setForm({ ...form, emergencyPhone: e.target.value })}
+                        placeholder="+91 98765 00000"
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <Label>Additional Notes or Preferences</Label>
-                <Textarea value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Dietary preferences, parking requirements, special requests..." />
-              </div>
-
-              {submitMutation.isError && (
-                <p className="text-xs text-red-400 font-semibold p-3 rounded-lg bg-red-950/40 border border-red-500/30">
-                  {(submitMutation.error as any)?.message || 'Failed to submit registration. Please try again.'}
-                </p>
-              )}
-
-              {/* High-Popping Primary CTA */}
-              <Button type="submit" size="lg" className="w-full mt-4 text-base font-bold shadow-xl shadow-indigo-500/30" disabled={submitMutation.isPending || !form.name || !form.phone}>
-                {submitMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Submitting Registration...
-                  </>
-                ) : (
-                  <>
-                    Submit Check-In Registration
-                    <ShieldCheck className="h-5 w-5 ml-1.5" />
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
+                  <Button type="submit" disabled={submitMutation.isPending} className="btn-primary w-full font-bold text-xs py-2.5 mt-2">
+                    {submitMutation.isPending ? 'Submitting Details...' : 'Complete Self Check-In'}
+                    <ArrowRight className="h-4 w-4 ml-1.5" />
+                  </Button>
+                </form>
+              </CardContent>
+            </>
+          )}
         </Card>
-      </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="max-w-2xl w-full mx-auto text-center py-2 text-xs text-[#667085]">
+        <p>Powered by <strong className="text-[#173B6C]">RENTAQ</strong> · Encrypted property onboarding</p>
+      </footer>
     </div>
   );
 }

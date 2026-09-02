@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Sparkles, ChevronRight, ChevronLeft, X,
+  ChevronRight, ChevronLeft, X,
   LayoutDashboard, Building2, Globe2, CreditCard,
   Printer, Bot, MessageSquare, CheckCircle2
 } from 'lucide-react';
@@ -15,7 +15,7 @@ const TOUR_STEPS = [
   {
     step: 1,
     title: 'Operations Center',
-    desc: 'Your live mission control. Instantly see today’s check-ins, check-outs, overdue alerts, and bed availability.',
+    desc: 'Live operational control. Instantly see today’s check-ins, check-outs, overdue alerts, and bed availability.',
     icon: LayoutDashboard,
   },
   {
@@ -70,43 +70,40 @@ export function ProductTour({ onClose }: TourProps) {
   return (
     <div className="fixed bottom-6 right-6 z-50 max-w-md w-full p-2">
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        initial={{ opacity: 0, y: 15, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        className="rounded-2xl border border-indigo-500/40 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-6 relative overflow-hidden"
+        exit={{ opacity: 0, y: 15, scale: 0.97 }}
+        className="rounded-xl border border-[#E5EAF1] bg-white shadow-[0_8px_30px_rgba(23,32,51,0.12)] p-6 relative overflow-hidden"
       >
-        {/* Glow corner */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/15 rounded-full blur-2xl pointer-events-none" />
-
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#EFF5FF] text-[#2F6FED]">
               <Icon className="h-4 w-4" />
             </span>
-            <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
+            <span className="text-xs font-bold text-[#173B6C] uppercase tracking-wider">
               Tour · {currentStep + 1} of {TOUR_STEPS.length}
             </span>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-1" title="Close tour">
+          <button onClick={onClose} className="text-[#667085] hover:text-[#172033] transition-colors p-1" title="Close tour">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="space-y-2 mb-6">
-          <h4 className="text-base font-bold text-white">{stepData.title}</h4>
-          <p className="text-xs text-slate-300 leading-relaxed">{stepData.desc}</p>
+        <div className="space-y-1.5 mb-6">
+          <h4 className="text-sm font-bold text-[#172033]">{stepData.title}</h4>
+          <p className="text-xs text-[#667085] leading-relaxed">{stepData.desc}</p>
         </div>
 
         {/* Progress Dots & Buttons */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+        <div className="flex items-center justify-between pt-3 border-t border-[#E5EAF1]">
           <div className="flex items-center gap-1.5">
             {TOUR_STEPS.map((_, i) => (
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === currentStep ? 'w-5 bg-indigo-500' : 'w-1.5 bg-slate-700'
+                  i === currentStep ? 'w-5 bg-[#2F6FED]' : 'w-1.5 bg-[#E5EAF1]'
                 }`}
               />
             ))}
@@ -118,7 +115,7 @@ export function ProductTour({ onClose }: TourProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentStep(currentStep - 1)}
-                className="text-xs text-slate-300 hover:text-white h-8 px-2.5"
+                className="text-xs text-[#667085] hover:text-[#172033] h-8 px-2.5"
               >
                 <ChevronLeft className="h-3.5 w-3.5 mr-0.5" /> Back
               </Button>
@@ -128,12 +125,12 @@ export function ProductTour({ onClose }: TourProps) {
               <Button
                 size="sm"
                 onClick={() => setCurrentStep(currentStep + 1)}
-                className="text-xs font-bold h-8 px-3.5"
+                className="btn-primary text-xs font-bold h-8 px-3.5"
               >
                 Next <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
               </Button>
             ) : (
-              <Button size="sm" onClick={onClose} className="text-xs font-bold h-8 px-3.5">
+              <Button size="sm" onClick={onClose} className="btn-primary text-xs font-bold h-8 px-3.5">
                 Got It!
               </Button>
             )}

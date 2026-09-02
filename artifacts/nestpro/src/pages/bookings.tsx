@@ -21,14 +21,14 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 const SOURCE_BADGES: Record<string, { label: string; color: string }> = {
-  direct: { label: 'Direct Booking', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-  booking_com: { label: 'Booking.com', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-  airbnb: { label: 'Airbnb', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
-  agoda: { label: 'Agoda', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
-  makemytrip: { label: 'MakeMyTrip', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
-  expedia: { label: 'Expedia', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
-  phone: { label: 'Phone Inquiry', color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
-  other: { label: 'Other Channel', color: 'bg-slate-700 text-slate-300' },
+  direct: { label: 'Direct Booking', color: 'bg-[#E8F5E9] text-[#16845B] border-[#C8E6C9]' },
+  booking_com: { label: 'Booking.com', color: 'bg-[#EFF5FF] text-[#2F6FED] border-[#D6E4FF]' },
+  airbnb: { label: 'Airbnb', color: 'bg-[#FFEBEE] text-[#D64545] border-[#FFCDD2]' },
+  agoda: { label: 'Agoda', color: 'bg-[#F3E8FF] text-[#7E22CE] border-[#E9D5FF]' },
+  makemytrip: { label: 'MakeMyTrip', color: 'bg-[#FFF8E1] text-[#D98A00] border-[#FFE082]' },
+  expedia: { label: 'Expedia', color: 'bg-[#FEF9C3] text-[#A16207] border-[#FEF08A]' },
+  phone: { label: 'Phone Inquiry', color: 'bg-[#F0F4FA] text-[#173B6C] border-[#E5EAF1]' },
+  other: { label: 'Other Channel', color: 'bg-[#F0F4FA] text-[#667085] border-[#E5EAF1]' },
 };
 
 export default function BookingsPage() {
@@ -88,17 +88,17 @@ export default function BookingsPage() {
       {/* Financial Reconciliation Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Gross Bookings', value: totalGross, color: 'text-indigo-400', bg: 'bg-indigo-950/40' },
-          { label: 'Platform Fees (OTAs)', value: totalFees, color: 'text-amber-400', bg: 'bg-amber-950/40' },
-          { label: 'Net Receivable', value: totalNet, color: 'text-purple-400', bg: 'bg-purple-950/40' },
-          { label: 'Amount Received', value: totalReceived, color: 'text-emerald-400', bg: 'bg-emerald-950/40' },
+          { label: 'Gross Bookings', value: totalGross, color: 'text-[#173B6C]', bg: 'bg-[#EFF5FF]' },
+          { label: 'Platform Fees (OTAs)', value: totalFees, color: 'text-[#D98A00]', bg: 'bg-[#FFF8E1]' },
+          { label: 'Net Receivable', value: totalNet, color: 'text-[#2F6FED]', bg: 'bg-[#EFF5FF]' },
+          { label: 'Amount Received', value: totalReceived, color: 'text-[#16845B]', bg: 'bg-[#E8F5E9]' },
         ].map(({ label, value, color, bg }) => (
-          <Card key={label} className="border-slate-800 bg-slate-900/90">
+          <Card key={label}>
             <CardContent className="p-5">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${color} ${bg} inline-flex items-center gap-1 mb-2`}>
-                <IndianRupee className="h-3.5 w-3.5" /> {label}
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${color} ${bg} inline-flex items-center gap-1 mb-2`}>
+                <IndianRupee className="h-3 w-3" /> {label}
               </span>
-              <p className="text-2xl font-black text-white">{formatCurrency(value)}</p>
+              <p className="text-2xl font-black text-[#172033]">{formatCurrency(value)}</p>
             </CardContent>
           </Card>
         ))}
@@ -107,10 +107,10 @@ export default function BookingsPage() {
       {/* Filter and Actions Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Filter className="h-4 w-4 text-slate-400" />
+          <Filter className="h-4 w-4 text-[#667085]" />
           <Select value={channelFilter} onValueChange={setChannelFilter}>
-            <SelectTrigger className="w-48 bg-slate-900 border-slate-700"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-700">
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-white border-[#E5EAF1]">
               <SelectItem value="all">All Channels</SelectItem>
               <SelectItem value="direct">Direct Bookings</SelectItem>
               <SelectItem value="booking_com">Booking.com</SelectItem>
@@ -122,26 +122,26 @@ export default function BookingsPage() {
           </Select>
         </div>
 
-        <Button onClick={() => setShowCreate(true)} className="font-bold">
+        <Button onClick={() => setShowCreate(true)} className="btn-primary font-bold">
           <Plus className="h-4 w-4 mr-1.5" /> Record New Booking
         </Button>
       </div>
 
       {/* Bookings Table */}
-      <Card className="border-slate-800 bg-slate-900/90">
+      <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">{Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
           ) : bookings.length === 0 ? (
             <div className="text-center py-16">
-              <Globe2 className="h-12 w-12 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-100 font-bold">No bookings found</p>
-              <p className="text-xs text-slate-400 mt-1">Direct bookings and channel reservations will appear here</p>
+              <Globe2 className="h-12 w-12 text-[#CBD5E1] mx-auto mb-3" />
+              <p className="text-[#172033] font-bold">No bookings recorded</p>
+              <p className="text-xs text-[#667085] mt-1">Direct bookings and channel reservations will appear here</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-800">
+                <TableRow>
                   <TableHead>Guest</TableHead>
                   <TableHead>Source / Channel</TableHead>
                   <TableHead>Dates</TableHead>
@@ -155,37 +155,37 @@ export default function BookingsPage() {
                 {bookings.map((b: any) => {
                   const sourceBadge = SOURCE_BADGES[b.source] || SOURCE_BADGES.direct;
                   return (
-                    <TableRow key={b.id} className="border-slate-800/80">
+                    <TableRow key={b.id}>
                       <TableCell>
-                        <p className="font-bold text-white text-sm">{b.guestName}</p>
-                        <p className="text-xs text-slate-400">{b.guestPhone || b.guestEmail || '—'}</p>
+                        <p className="font-bold text-[#172033] text-sm">{b.guestName}</p>
+                        <p className="text-xs text-[#667085]">{b.guestPhone || b.guestEmail || '—'}</p>
                       </TableCell>
                       <TableCell>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${sourceBadge.color}`}>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${sourceBadge.color}`}>
                           {sourceBadge.label}
                         </span>
                         {b.externalBookingId && (
-                          <span className="block text-[10px] font-mono text-slate-400 mt-0.5">#{b.externalBookingId}</span>
+                          <span className="block text-[10px] font-mono text-[#667085] mt-0.5">#{b.externalBookingId}</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs text-slate-200">{formatDate(b.checkInDate)} → {formatDate(b.checkOutDate)}</span>
+                        <span className="text-xs font-medium text-[#172033]">{formatDate(b.checkInDate)} → {formatDate(b.checkOutDate)}</span>
                         {b.isExtension === 'yes' && (
-                          <span className="block text-[10px] text-indigo-400 font-bold mt-0.5">Direct Extension</span>
+                          <span className="block text-[10px] text-[#2F6FED] font-bold mt-0.5">Direct Extension</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-bold text-white">{formatCurrency(b.grossAmount)}</span>
+                        <span className="text-xs font-bold text-[#172033]">{formatCurrency(b.grossAmount)}</span>
                         {b.platformFee > 0 && (
-                          <span className="block text-[10px] text-amber-400 font-mono">-₹{b.platformFee} fee</span>
+                          <span className="block text-[10px] text-[#D98A00] font-mono">-₹{b.platformFee} fee</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-black text-emerald-400">{formatCurrency(b.netReceivable)}</span>
-                        <span className="block text-[10px] text-slate-400 capitalize">Rec: {formatCurrency(b.amountReceived)}</span>
+                        <span className="text-xs font-black text-[#16845B]">{formatCurrency(b.netReceivable)}</span>
+                        <span className="block text-[10px] text-[#667085] capitalize">Rec: {formatCurrency(b.amountReceived)}</span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={b.status === 'confirmed' ? 'success' : b.status === 'extended' ? 'default' : 'ghost'}>
+                        <Badge variant={b.status === 'confirmed' ? 'success' : b.status === 'extended' ? 'default' : 'secondary'}>
                           {b.status}
                         </Badge>
                       </TableCell>
@@ -217,9 +217,9 @@ export default function BookingsPage() {
 
       {/* New Booking Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-xl bg-slate-900 border-slate-700">
-          <DialogHeader><DialogTitle className="text-white">Record New Booking</DialogTitle></DialogHeader>
-          <div className="space-y-4 p-6 max-h-[70vh] overflow-y-auto">
+        <DialogContent className="max-w-xl bg-white border-[#E5EAF1]">
+          <DialogHeader><DialogTitle>Record New Booking</DialogTitle></DialogHeader>
+          <div className="space-y-4 p-5 max-h-[70vh] overflow-y-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Guest Name *</Label>
@@ -229,7 +229,7 @@ export default function BookingsPage() {
                 <Label>Channel Source</Label>
                 <Select value={bookingForm.source} onValueChange={(v) => setBookingForm({ ...bookingForm, source: v })}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-700">
+                  <SelectContent className="bg-white border-[#E5EAF1]">
                     <SelectItem value="direct">Direct Booking</SelectItem>
                     <SelectItem value="booking_com">Booking.com</SelectItem>
                     <SelectItem value="airbnb">Airbnb</SelectItem>
@@ -278,9 +278,9 @@ export default function BookingsPage() {
               </div>
             </div>
           </div>
-          <DialogFooter className="p-6 border-t border-slate-800">
+          <DialogFooter className="p-4 border-t border-[#E5EAF1]">
             <Button variant="ghost" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button disabled={createMutation.isPending || !bookingForm.guestName || !bookingForm.grossAmount} onClick={() => createMutation.mutate(bookingForm)}>
+            <Button disabled={createMutation.isPending || !bookingForm.guestName || !bookingForm.grossAmount} onClick={() => createMutation.mutate(bookingForm)} className="btn-primary font-bold">
               {createMutation.isPending ? 'Recording...' : 'Confirm Booking'}
             </Button>
           </DialogFooter>
@@ -289,14 +289,14 @@ export default function BookingsPage() {
 
       {/* Direct Stay Extension Modal */}
       <Dialog open={!!extendingBooking} onOpenChange={(v) => !v && setExtendingBooking(null)}>
-        <DialogContent className="max-w-md bg-slate-900 border-slate-700">
+        <DialogContent className="max-w-md bg-white border-[#E5EAF1]">
           <DialogHeader>
-            <DialogTitle className="text-white">Direct Stay Extension</DialogTitle>
-            <CardDescription className="text-slate-300">
+            <DialogTitle>Direct Stay Extension</DialogTitle>
+            <CardDescription className="text-xs text-[#667085]">
               Extend stay for <strong>{extendingBooking?.guestName}</strong> directly without OTA platform commission.
             </CardDescription>
           </DialogHeader>
-          <div className="space-y-4 p-6">
+          <div className="space-y-4 p-4">
             <div>
               <Label>New Extended Check-Out Date *</Label>
               <Input type="date" value={extForm.newCheckOutDate} onChange={(e) => setExtForm({ ...extForm, newCheckOutDate: e.target.value })} />
@@ -310,11 +310,12 @@ export default function BookingsPage() {
               <Input value={extForm.notes} onChange={(e) => setExtForm({ ...extForm, notes: e.target.value })} placeholder="Paid via UPI direct extension" />
             </div>
           </div>
-          <DialogFooter className="p-6 border-t border-slate-800">
+          <DialogFooter className="p-4 border-t border-[#E5EAF1]">
             <Button variant="ghost" onClick={() => setExtendingBooking(null)}>Cancel</Button>
             <Button
               disabled={extendMutation.isPending || !extForm.newCheckOutDate}
               onClick={() => extendMutation.mutate({ id: extendingBooking.id, data: { ...extForm, additionalAmount: Number(extForm.additionalAmount) } })}
+              className="btn-primary font-bold"
             >
               {extendMutation.isPending ? 'Extending...' : 'Confirm Direct Extension'}
             </Button>

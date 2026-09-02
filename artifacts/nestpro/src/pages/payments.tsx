@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreditCard, IndianRupee, AlertTriangle, CheckCircle, Clock, Plus, Filter } from 'lucide-react';
+import {
+  CreditCard, Plus, IndianRupee, Filter,
+  CheckCircle2, Clock, AlertCircle, Search, Download
+} from 'lucide-react';
 import { Layout } from '@/components/layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePropertyContext } from '@/components/property-provider';
@@ -16,138 +19,203 @@ import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
-const STATUS_BADGE: Record<string, any> = { paid: 'success', pending: 'warning', overdue: 'destructive', partial: 'secondary' };
-const STATUS_ICON: Record<string, any> = { paid: CheckCircle, pending: Clock, overdue: AlertTriangle };
-
 export default function PaymentsPage() {
   const qc = useQueryClient();
   const { activeProperty } = usePropertyContext();
   const pid = activeProperty?.id;
 
   const [statusFilter, setStatusFilter] = useState('all');
-  const [editing, setEditing] = useState<any>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [showAddPayment, setShowAddPayment] = useState(false);
+
+  const [payForm, setPayForm] = useState({
+    guestId: '',
+    amount: '8500',
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    method: 'upi',
+    status: 'paid',
+    notes: '',
+  });
 
   const { data: payments = [], isLoading } = useQuery({
     queryKey: ['payments', pid, statusFilter],
     queryFn: () => api.getPayments({ propertyId: pid, status: statusFilter === 'all' ? undefined : statusFilter }),
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: any) => api.updatePayment(id, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['payments'] }); setEditing(null); toast({ title: 'Payment updated!', variant: 'success' }); },
-    onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  const { data: guests = [] } = useQuery({
+    queryKey: ['guests', pid],
+    queryFn: () => api.getGuests({ propertyId: pid, status: 'active' }),
   });
 
-  const totalCollected = (payments as any[]).filter((p) => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalOverdue = (payments as any[]).filter((p) => p.status === 'overdue').reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalPending = (payments as any[]).filter((p) => p.status === 'pending').reduce((sum, p) => sum + Number(p.amount), 0);
+  const createPaymentMutation = useMutation({
+    mutationFn: (data: any) => api.createPayment({ ...data, propertyId: pid, paidAt: new Date().toISOString() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['payments'] });
+      setShowAddPayment(false);
+      toast({ title: 'Payment recorded & ledger updated!', variant: 'success' });
+    },
+  });
 
-  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const totalCollected = payments.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+  const totalPending = payments.filter((p: any) => p.status !== 'paid').reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
   return (
-    <Layout title="Payments">
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {[
-          { label: 'Collected', value: totalCollected, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-          { label: 'Pending', value: totalPending, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-          { label: 'Overdue', value: totalOverdue, color: 'text-red-400', bg: 'bg-red-500/10' },
-        ].map(({ label, value, color, bg }) => (
-          <Card key={label}>
-            <CardContent className="p-5">
-              <div className={`inline-flex items-center gap-2 text-sm font-medium ${color} ${bg} px-2.5 py-1 rounded-lg mb-2`}>
-                <IndianRupee className="h-3.5 w-3.5" />{label}
-              </div>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(value)}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <Layout title="Payments & Financial Ledger">
+      {/* Top Financial Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-5">
+            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#E8F5E9] text-[#16845B] inline-flex items-center gap-1 mb-2">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Total Collected
+            </span>
+            <p className="text-2xl font-black text-[#172033]">{formatCurrency(totalCollected)}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5">
+            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#FFF8E1] text-[#D98A00] inline-flex items-center gap-1 mb-2">
+              <Clock className="h-3.5 w-3.5" /> Pending Receivables
+            </span>
+            <p className="text-2xl font-black text-[#D98A00]">{formatCurrency(totalPending)}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5">
+            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#EFF5FF] text-[#2F6FED] inline-flex items-center gap-1 mb-2">
+              <CreditCard className="h-3.5 w-3.5" /> Total Transactions
+            </span>
+            <p className="text-2xl font-black text-[#172033]">{payments.length} entries</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-3 mb-4">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
-            <SelectItem value="partial">Partial</SelectItem>
-          </SelectContent>
-        </Select>
-        <span className="text-sm text-muted-foreground ml-auto">{payments.length} records</span>
+      {/* Filter and Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Filter className="h-4 w-4 text-[#667085]" />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent className="bg-white border-[#E5EAF1]">
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="paid">Paid & Settled</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button onClick={() => setShowAddPayment(true)} disabled={guests.length === 0} className="btn-primary font-bold">
+          <Plus className="h-4 w-4 mr-1.5" /> Record Payment
+        </Button>
       </div>
 
+      {/* Payments Table */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? <div className="p-6 space-y-3">{Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-12" />)}</div> : (
+          {isLoading ? (
+            <div className="p-6 space-y-3">{Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
+          ) : payments.length === 0 ? (
+            <div className="text-center py-16">
+              <CreditCard className="h-12 w-12 text-[#CBD5E1] mx-auto mb-3" />
+              <p className="text-[#172033] font-bold">No payments recorded</p>
+              <p className="text-xs text-[#667085] mt-1">Recorded rent settlements and receipts will show here.</p>
+            </div>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Period</TableHead>
+                  <TableHead>Resident</TableHead>
+                  <TableHead>Billing Period</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Method</TableHead>
+                  <TableHead>Payment Mode</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Paid At</TableHead>
-                  <TableHead />
+                  <TableHead className="text-right">Transaction Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(payments as any[]).map((p) => {
-                  const Icon = STATUS_ICON[p.status];
-                  return (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium text-foreground">{p.guestName}</TableCell>
-                      <TableCell className="text-muted-foreground">{MONTH_NAMES[p.month - 1]} {p.year}</TableCell>
-                      <TableCell className="font-semibold text-foreground">{formatCurrency(p.amount)}</TableCell>
-                      <TableCell className="text-muted-foreground capitalize">{p.method ?? '—'}</TableCell>
-                      <TableCell>
-                        <Badge variant={STATUS_BADGE[p.status] ?? 'ghost'} className="gap-1">
-                          {Icon && <Icon className="h-3 w-3" />}{p.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{p.paidAt ? formatDate(p.paidAt) : '—'}</TableCell>
-                      <TableCell>
-                        <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setEditForm({ status: p.status, method: p.method, upiRef: p.upiRef ?? '', notes: p.notes ?? '' }); }}>Edit</Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {payments.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No payments found</TableCell></TableRow>
-                )}
+                {payments.map((p: any) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <p className="font-bold text-[#172033] text-sm">{p.guestName || `Resident #${p.guestId}`}</p>
+                    </TableCell>
+                    <TableCell className="text-xs text-[#667085]">
+                      Month {p.month} / {p.year}
+                    </TableCell>
+                    <TableCell className="text-xs font-black text-[#16845B]">
+                      {formatCurrency(p.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] uppercase font-mono">{p.method || 'UPI'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={p.status === 'paid' ? 'success' : p.status === 'overdue' ? 'destructive' : 'warning'}>
+                        {p.status === 'paid' ? 'Settled' : p.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-[#667085]">
+                      {formatDate(p.paidAt || p.createdAt)}
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Update Payment</DialogTitle></DialogHeader>
-          <div className="space-y-4 p-6">
-            <div><Label>Status</Label>
-              <Select value={editForm.status} onValueChange={(v) => setEditForm((f: any) => ({ ...f, status: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="paid">Paid</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="overdue">Overdue</SelectItem><SelectItem value="partial">Partial</SelectItem></SelectContent>
+      {/* Record Payment Dialog */}
+      <Dialog open={showAddPayment} onOpenChange={setShowAddPayment}>
+        <DialogContent className="max-w-md bg-white border-[#E5EAF1]">
+          <DialogHeader><DialogTitle>Record Payment Entry</DialogTitle></DialogHeader>
+          <div className="space-y-4 p-4">
+            <div>
+              <Label>Select Resident *</Label>
+              <Select value={payForm.guestId} onValueChange={(v) => setPayForm({ ...payForm, guestId: v })}>
+                <SelectTrigger><SelectValue placeholder="Choose resident" /></SelectTrigger>
+                <SelectContent className="bg-white border-[#E5EAF1]">
+                  {guests.map((g: any) => (
+                    <SelectItem key={g.id} value={String(g.id)}>{g.name} ({g.bedLabel || 'Room'})</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
-            <div><Label>Method</Label>
-              <Select value={editForm.method ?? 'upi'} onValueChange={(v) => setEditForm((f: any) => ({ ...f, method: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="cash">Cash</SelectItem><SelectItem value="upi">UPI</SelectItem><SelectItem value="bank_transfer">Bank Transfer</SelectItem><SelectItem value="cheque">Cheque</SelectItem></SelectContent>
+
+            <div>
+              <Label>Amount Settled (₹) *</Label>
+              <Input type="number" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Billing Month</Label>
+                <Input type="number" min="1" max="12" value={payForm.month} onChange={(e) => setPayForm({ ...payForm, month: parseInt(e.target.value) || 1 })} />
+              </div>
+              <div>
+                <Label>Year</Label>
+                <Input type="number" value={payForm.year} onChange={(e) => setPayForm({ ...payForm, year: parseInt(e.target.value) || 2026 })} />
+              </div>
+            </div>
+
+            <div>
+              <Label>Payment Mode</Label>
+              <Select value={payForm.method} onValueChange={(v) => setPayForm({ ...payForm, method: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-white border-[#E5EAF1]">
+                  <SelectItem value="upi">UPI (Google Pay, PhonePe, Paytm)</SelectItem>
+                  <SelectItem value="cash">Cash in Hand</SelectItem>
+                  <SelectItem value="bank_transfer">Bank NEFT / IMPS</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                </SelectContent>
               </Select>
             </div>
-            {editForm.method === 'upi' && <div><Label>UPI Ref</Label><Input className="mt-1" value={editForm.upiRef} onChange={(e) => setEditForm((f: any) => ({ ...f, upiRef: e.target.value }))} /></div>}
-            <div><Label>Notes</Label><Input className="mt-1" value={editForm.notes} onChange={(e) => setEditForm((f: any) => ({ ...f, notes: e.target.value }))} /></div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ id: editing.id, data: editForm })}>Save</Button>
+          <DialogFooter className="p-4 border-t border-[#E5EAF1]">
+            <Button variant="ghost" onClick={() => setShowAddPayment(false)}>Cancel</Button>
+            <Button disabled={createPaymentMutation.isPending || !payForm.guestId || !payForm.amount} onClick={() => createPaymentMutation.mutate(payForm)} className="btn-primary font-bold">
+              Record & Save Receipt
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
